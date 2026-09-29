@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: underleaf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-underleaf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-underleaf}
+      POSTGRES_DB: ${POSTGRES_DB:-underleaf}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-underleaf} -d ${POSTGRES_DB:-underleaf}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - underleaf-net
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: underleaf-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      DATABASE_URL: postgresql://${POSTGRES_USER:-underleaf}:${POSTGRES_PASSWORD:-underleaf}@postgres:5432/${POSTGRES_DB:-underleaf}?schema=public
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-underleaf-super-secret-random-token-change-in-production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3333}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_METHODS: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    ports:
+      - "${BACKEND_PORT:-3333}:3333"
+    volumes:
+      - storage_data:/app/storage
+      - tectonic_cache:/root/.cache/Tectonic
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - underleaf-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: underleaf-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
+      INTERNAL_API_URL: http://backend:3333
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - underleaf-net
+
+volumes:
+  postgres_data:
+    driver: local
+  storage_data:
+    driver: local
+  tectonic_cache:
+    driver: local
+
+networks:
+  underleaf-net:
+    driver: bridge

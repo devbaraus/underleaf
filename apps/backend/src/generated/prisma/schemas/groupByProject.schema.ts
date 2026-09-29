@@ -1,0 +1,15 @@
+import type { Prisma } from '../browser';
+import * as z from 'zod';
+import { ProjectWhereInputObjectSchema as ProjectWhereInputObjectSchema } from './objects/ProjectWhereInput.schema';
+import { ProjectOrderByWithAggregationInputObjectSchema as ProjectOrderByWithAggregationInputObjectSchema } from './objects/ProjectOrderByWithAggregationInput.schema';
+import { ProjectScalarWhereWithAggregatesInputObjectSchema as ProjectScalarWhereWithAggregatesInputObjectSchema } from './objects/ProjectScalarWhereWithAggregatesInput.schema';
+import { ProjectScalarFieldEnumSchema } from './enums/ProjectScalarFieldEnum.schema';
+import { ProjectCountAggregateInputObjectSchema as ProjectCountAggregateInputObjectSchema } from './objects/ProjectCountAggregateInput.schema';
+import { ProjectMinAggregateInputObjectSchema as ProjectMinAggregateInputObjectSchema } from './objects/ProjectMinAggregateInput.schema';
+import { ProjectMaxAggregateInputObjectSchema as ProjectMaxAggregateInputObjectSchema } from './objects/ProjectMaxAggregateInput.schema';
+import { ProjectAvgAggregateInputObjectSchema as ProjectAvgAggregateInputObjectSchema } from './objects/ProjectAvgAggregateInput.schema';
+import { ProjectSumAggregateInputObjectSchema as ProjectSumAggregateInputObjectSchema } from './objects/ProjectSumAggregateInput.schema';
+
+export const ProjectGroupBySchema: z.ZodType<Prisma.ProjectGroupByArgs> = z.object({ where: ProjectWhereInputObjectSchema.optional(), orderBy: z.union([ProjectOrderByWithAggregationInputObjectSchema, ProjectOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ProjectScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ProjectScalarFieldEnumSchema), _count: z.union([ z.literal(true), ProjectCountAggregateInputObjectSchema ]).optional(), _min: ProjectMinAggregateInputObjectSchema.optional(), _max: ProjectMaxAggregateInputObjectSchema.optional(), _avg: ProjectAvgAggregateInputObjectSchema.optional(), _sum: ProjectSumAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ProjectGroupByArgs>;
+
+export const ProjectGroupByZodSchema = z.object({ where: ProjectWhereInputObjectSchema.optional(), orderBy: z.union([ProjectOrderByWithAggregationInputObjectSchema, ProjectOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ProjectScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ProjectScalarFieldEnumSchema), _count: z.union([ z.literal(true), ProjectCountAggregateInputObjectSchema ]).optional(), _min: ProjectMinAggregateInputObjectSchema.optional(), _max: ProjectMaxAggregateInputObjectSchema.optional(), _avg: ProjectAvgAggregateInputObjectSchema.optional(), _sum: ProjectSumAggregateInputObjectSchema.optional() }).strict();

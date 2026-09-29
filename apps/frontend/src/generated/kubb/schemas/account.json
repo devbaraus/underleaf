@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "readOnly": true },
+    "accountId": { "type": "string" },
+    "providerId": { "type": "string" },
+    "userId": { "type": "string" },
+    "accessToken": { "type": "string" },
+    "refreshToken": { "type": "string" },
+    "idToken": { "type": "string" },
+    "accessTokenExpiresAt": { "type": "string", "format": "date-time" },
+    "refreshTokenExpiresAt": { "type": "string", "format": "date-time" },
+    "scope": { "type": "string" },
+    "password": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "required": ["id", "accountId", "providerId", "userId", "createdAt", "updatedAt"],
+  "x-readme-ref-name": "Account"
+}

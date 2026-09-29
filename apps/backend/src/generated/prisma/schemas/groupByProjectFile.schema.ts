@@ -1,0 +1,15 @@
+import type { Prisma } from '../browser';
+import * as z from 'zod';
+import { ProjectFileWhereInputObjectSchema as ProjectFileWhereInputObjectSchema } from './objects/ProjectFileWhereInput.schema';
+import { ProjectFileOrderByWithAggregationInputObjectSchema as ProjectFileOrderByWithAggregationInputObjectSchema } from './objects/ProjectFileOrderByWithAggregationInput.schema';
+import { ProjectFileScalarWhereWithAggregatesInputObjectSchema as ProjectFileScalarWhereWithAggregatesInputObjectSchema } from './objects/ProjectFileScalarWhereWithAggregatesInput.schema';
+import { ProjectFileScalarFieldEnumSchema } from './enums/ProjectFileScalarFieldEnum.schema';
+import { ProjectFileCountAggregateInputObjectSchema as ProjectFileCountAggregateInputObjectSchema } from './objects/ProjectFileCountAggregateInput.schema';
+import { ProjectFileMinAggregateInputObjectSchema as ProjectFileMinAggregateInputObjectSchema } from './objects/ProjectFileMinAggregateInput.schema';
+import { ProjectFileMaxAggregateInputObjectSchema as ProjectFileMaxAggregateInputObjectSchema } from './objects/ProjectFileMaxAggregateInput.schema';
+import { ProjectFileAvgAggregateInputObjectSchema as ProjectFileAvgAggregateInputObjectSchema } from './objects/ProjectFileAvgAggregateInput.schema';
+import { ProjectFileSumAggregateInputObjectSchema as ProjectFileSumAggregateInputObjectSchema } from './objects/ProjectFileSumAggregateInput.schema';
+
+export const ProjectFileGroupBySchema: z.ZodType<Prisma.ProjectFileGroupByArgs> = z.object({ where: ProjectFileWhereInputObjectSchema.optional(), orderBy: z.union([ProjectFileOrderByWithAggregationInputObjectSchema, ProjectFileOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ProjectFileScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ProjectFileScalarFieldEnumSchema), _count: z.union([ z.literal(true), ProjectFileCountAggregateInputObjectSchema ]).optional(), _min: ProjectFileMinAggregateInputObjectSchema.optional(), _max: ProjectFileMaxAggregateInputObjectSchema.optional(), _avg: ProjectFileAvgAggregateInputObjectSchema.optional(), _sum: ProjectFileSumAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.ProjectFileGroupByArgs>;
+
+export const ProjectFileGroupByZodSchema = z.object({ where: ProjectFileWhereInputObjectSchema.optional(), orderBy: z.union([ProjectFileOrderByWithAggregationInputObjectSchema, ProjectFileOrderByWithAggregationInputObjectSchema.array()]).optional(), having: ProjectFileScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(ProjectFileScalarFieldEnumSchema), _count: z.union([ z.literal(true), ProjectFileCountAggregateInputObjectSchema ]).optional(), _min: ProjectFileMinAggregateInputObjectSchema.optional(), _max: ProjectFileMaxAggregateInputObjectSchema.optional(), _avg: ProjectFileAvgAggregateInputObjectSchema.optional(), _sum: ProjectFileSumAggregateInputObjectSchema.optional() }).strict();

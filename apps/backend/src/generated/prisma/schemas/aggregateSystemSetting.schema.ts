@@ -1,0 +1,12 @@
+import type { Prisma } from '../browser';
+import * as z from 'zod';
+import { SystemSettingOrderByWithRelationInputObjectSchema as SystemSettingOrderByWithRelationInputObjectSchema } from './objects/SystemSettingOrderByWithRelationInput.schema';
+import { SystemSettingWhereInputObjectSchema as SystemSettingWhereInputObjectSchema } from './objects/SystemSettingWhereInput.schema';
+import { SystemSettingWhereUniqueInputObjectSchema as SystemSettingWhereUniqueInputObjectSchema } from './objects/SystemSettingWhereUniqueInput.schema';
+import { SystemSettingCountAggregateInputObjectSchema as SystemSettingCountAggregateInputObjectSchema } from './objects/SystemSettingCountAggregateInput.schema';
+import { SystemSettingMinAggregateInputObjectSchema as SystemSettingMinAggregateInputObjectSchema } from './objects/SystemSettingMinAggregateInput.schema';
+import { SystemSettingMaxAggregateInputObjectSchema as SystemSettingMaxAggregateInputObjectSchema } from './objects/SystemSettingMaxAggregateInput.schema';
+
+export const SystemSettingAggregateSchema: z.ZodType<Prisma.SystemSettingAggregateArgs> = z.object({ orderBy: z.union([SystemSettingOrderByWithRelationInputObjectSchema, SystemSettingOrderByWithRelationInputObjectSchema.array()]).optional(), where: SystemSettingWhereInputObjectSchema.optional(), cursor: SystemSettingWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), SystemSettingCountAggregateInputObjectSchema ]).optional(), _min: SystemSettingMinAggregateInputObjectSchema.optional(), _max: SystemSettingMaxAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.SystemSettingAggregateArgs>;
+
+export const SystemSettingAggregateZodSchema = z.object({ orderBy: z.union([SystemSettingOrderByWithRelationInputObjectSchema, SystemSettingOrderByWithRelationInputObjectSchema.array()]).optional(), where: SystemSettingWhereInputObjectSchema.optional(), cursor: SystemSettingWhereUniqueInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), _count: z.union([ z.literal(true), SystemSettingCountAggregateInputObjectSchema ]).optional(), _min: SystemSettingMinAggregateInputObjectSchema.optional(), _max: SystemSettingMaxAggregateInputObjectSchema.optional() }).strict();

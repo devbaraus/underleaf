@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "readOnly": true },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "token": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "ipAddress": { "type": "string" },
+    "userAgent": { "type": "string" },
+    "userId": { "type": "string" },
+    "impersonatedBy": { "type": "string", "readOnly": true }
+  },
+  "required": ["id", "expiresAt", "token", "createdAt", "updatedAt", "userId"],
+  "x-readme-ref-name": "Session"
+}

@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "readOnly": true },
+    "name": { "type": "string" },
+    "email": { "type": "string" },
+    "emailVerified": { "type": "boolean", "default": false, "readOnly": true },
+    "image": { "type": "string" },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "role": { "type": "string", "default": "editor" },
+    "banned": { "type": "boolean", "default": false, "readOnly": true },
+    "banReason": { "type": "string", "readOnly": true },
+    "banExpires": { "type": "string", "format": "date-time", "readOnly": true },
+    "status": { "type": "string", "default": "active" },
+    "quotaMb": { "type": "number", "default": 500 },
+    "storageUsedMb": { "type": "number", "default": 0 }
+  },
+  "required": ["id", "name", "email", "emailVerified", "createdAt", "updatedAt"],
+  "x-readme-ref-name": "User"
+}

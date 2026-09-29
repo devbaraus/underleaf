@@ -1,0 +1,185 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider   = "prisma-client"
+  output     = "../src/generated/prisma"
+  engineType = "client"
+  runtime    = "bun"
+}
+
+generator zod {
+  provider = "prisma-zod-generator"
+  output   = "../src/generated/prisma"
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  UPSERT
+}
+
+model AuditLog {
+  id        String      @id @default(cuid()) @map("id")
+  model     String      @map("model")
+  action    AuditAction @map("action")
+  recordId  String?     @map("record_id")
+  userId    String?     @map("user_id")
+  after     Json?       @map("after")
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([model, recordId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
+
+model User {
+  id            String    @id @default(uuid()) @map("id")
+  email         String    @unique @map("email")
+  name          String    @map("name")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?   @map("image")
+  role          String    @default("editor") @map("role") // "admin" | "editor" | "viewer"
+  status        String    @default("active") @map("status") // "active" | "suspended"
+  banned        Boolean?  @default(false) @map("banned")
+  banReason     String?   @map("ban_reason")
+  banExpires    DateTime? @map("ban_expires")
+  quotaMb       Int       @default(500) @map("quota_mb")
+  storageUsedMb Float     @default(0.0) @map("storage_used_mb")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  accounts      Account[]
+  projects      Project[] @relation("UserProjects")
+  compileLogs   CompileLog[]
+  auditLogs     AuditLog[]
+
+  @@map("user")
+}
+
+model Session {
+  id             String   @id @default(uuid()) @map("id")
+  userId         String   @map("user_id")
+  token          String   @unique @map("token")
+  expiresAt      DateTime @map("expires_at")
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  impersonatedBy String?  @map("impersonated_by")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid()) @map("id")
+  userId                String    @map("user_id")
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  password              String?   @map("password")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?   @map("scope")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid()) @map("id")
+  identifier String   @map("identifier")
+  value      String   @map("value")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Project {
+  id               String        @id @default(uuid()) @map("id")
+  title            String        @map("title")
+  description      String        @default("") @map("description")
+  ownerId          String        @map("owner_id")
+  template         String        @default("academic-paper") @map("template")
+  compilerEngine   String        @default("tectonic") @map("compiler_engine")
+  status           String        @default("ready") @map("status") // "ready" | "compiling" | "error" | "success"
+  lastCompiledAt   DateTime?     @map("last_compiled_at")
+  hasPdf           Boolean       @default(false) @map("has_pdf")
+  storageBytes     Int           @default(0) @map("storage_bytes")
+  compilationCount Int           @default(0) @map("compilation_count")
+  tags             String[]      @default([]) @map("tags")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  owner            User          @relation("UserProjects", fields: [ownerId], references: [id], onDelete: Cascade)
+  files            ProjectFile[]
+  compileLogs      CompileLog[]
+
+  @@index([ownerId])
+  @@map("project")
+}
+
+model ProjectFile {
+  id        String   @id @default(uuid()) @map("id")
+  projectId String   @map("project_id")
+  name      String   @map("name")
+  path      String   @map("path") // ex: "main.tex", "references.bib", "figures/chart.png"
+  content   String   @map("content") // texto utf-8 ou base64
+  isMain    Boolean  @default(false) @map("is_main")
+  type      String   @default("tex") @map("type") // "tex" | "bib" | "cls" | "sty" | "image"
+  sizeBytes Int      @default(0) @map("size_bytes")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+  @@index([projectId])
+  @@map("project_file")
+}
+
+model CompileLog {
+  id         String   @id @default(uuid()) @map("id")
+  projectId  String   @map("project_id")
+  userId     String   @map("user_id")
+  success    Boolean  @map("success")
+  durationMs Int      @map("duration_ms")
+  errors     Json     @default("[]") @map("errors") // Array de erros estruturados
+  rawOutput  String   @default("") @map("raw_output")
+  engine     String   @default("tectonic") @map("engine")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([userId])
+  @@map("compile_log")
+}
+
+model SystemSetting {
+  key         String   @id @map("key")
+  value       String   @map("value")
+  description String   @default("") @map("description")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_setting")
+}

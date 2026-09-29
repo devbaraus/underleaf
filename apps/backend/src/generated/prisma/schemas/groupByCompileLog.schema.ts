@@ -1,0 +1,15 @@
+import type { Prisma } from '../browser';
+import * as z from 'zod';
+import { CompileLogWhereInputObjectSchema as CompileLogWhereInputObjectSchema } from './objects/CompileLogWhereInput.schema';
+import { CompileLogOrderByWithAggregationInputObjectSchema as CompileLogOrderByWithAggregationInputObjectSchema } from './objects/CompileLogOrderByWithAggregationInput.schema';
+import { CompileLogScalarWhereWithAggregatesInputObjectSchema as CompileLogScalarWhereWithAggregatesInputObjectSchema } from './objects/CompileLogScalarWhereWithAggregatesInput.schema';
+import { CompileLogScalarFieldEnumSchema } from './enums/CompileLogScalarFieldEnum.schema';
+import { CompileLogCountAggregateInputObjectSchema as CompileLogCountAggregateInputObjectSchema } from './objects/CompileLogCountAggregateInput.schema';
+import { CompileLogMinAggregateInputObjectSchema as CompileLogMinAggregateInputObjectSchema } from './objects/CompileLogMinAggregateInput.schema';
+import { CompileLogMaxAggregateInputObjectSchema as CompileLogMaxAggregateInputObjectSchema } from './objects/CompileLogMaxAggregateInput.schema';
+import { CompileLogAvgAggregateInputObjectSchema as CompileLogAvgAggregateInputObjectSchema } from './objects/CompileLogAvgAggregateInput.schema';
+import { CompileLogSumAggregateInputObjectSchema as CompileLogSumAggregateInputObjectSchema } from './objects/CompileLogSumAggregateInput.schema';
+
+export const CompileLogGroupBySchema: z.ZodType<Prisma.CompileLogGroupByArgs> = z.object({ where: CompileLogWhereInputObjectSchema.optional(), orderBy: z.union([CompileLogOrderByWithAggregationInputObjectSchema, CompileLogOrderByWithAggregationInputObjectSchema.array()]).optional(), having: CompileLogScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(CompileLogScalarFieldEnumSchema), _count: z.union([ z.literal(true), CompileLogCountAggregateInputObjectSchema ]).optional(), _min: CompileLogMinAggregateInputObjectSchema.optional(), _max: CompileLogMaxAggregateInputObjectSchema.optional(), _avg: CompileLogAvgAggregateInputObjectSchema.optional(), _sum: CompileLogSumAggregateInputObjectSchema.optional() }).strict() as unknown as z.ZodType<Prisma.CompileLogGroupByArgs>;
+
+export const CompileLogGroupByZodSchema = z.object({ where: CompileLogWhereInputObjectSchema.optional(), orderBy: z.union([CompileLogOrderByWithAggregationInputObjectSchema, CompileLogOrderByWithAggregationInputObjectSchema.array()]).optional(), having: CompileLogScalarWhereWithAggregatesInputObjectSchema.optional(), take: z.number().optional(), skip: z.number().optional(), by: z.array(CompileLogScalarFieldEnumSchema), _count: z.union([ z.literal(true), CompileLogCountAggregateInputObjectSchema ]).optional(), _min: CompileLogMinAggregateInputObjectSchema.optional(), _max: CompileLogMaxAggregateInputObjectSchema.optional(), _avg: CompileLogAvgAggregateInputObjectSchema.optional(), _sum: CompileLogSumAggregateInputObjectSchema.optional() }).strict();
