@@ -1,489 +1,304 @@
-import {
-  adminListUserSessionsMutationRequestSchema,
-  adminListUserSessionsMutationResponseSchema,
-} from './zod/adminListUserSessionsSchema.ts'
-import {
-  adminUpdateUserMutationRequestSchema,
-  adminUpdateUserMutationResponseSchema,
-} from './zod/adminUpdateUserSchema.ts'
-import { banUserMutationRequestSchema, banUserMutationResponseSchema } from './zod/banUserSchema.ts'
-import {
-  changeEmailMutationRequestSchema,
-  changeEmailMutationResponseSchema,
-} from './zod/changeEmailSchema.ts'
-import {
-  changePasswordMutationRequestSchema,
-  changePasswordMutationResponseSchema,
-} from './zod/changePasswordSchema.ts'
-import {
-  createUserMutationRequestSchema,
-  createUserMutationResponseSchema,
-} from './zod/createUserSchema.ts'
-import {
-  deleteApiProjectsByIdFilesByFileIdPathParamsSchema,
-  deleteApiProjectsByIdFilesByFileIdMutationResponseSchema,
-} from './zod/deleteApiProjectsByIdFilesByFileIdSchema.ts'
-import {
-  deleteApiProjectsByIdPathParamsSchema,
-  deleteApiProjectsByIdMutationResponseSchema,
-} from './zod/deleteApiProjectsByIdSchema.ts'
-import {
-  deleteUserMutationRequestSchema,
-  deleteUserMutationResponseSchema,
-} from './zod/deleteUserSchema.ts'
-import { getApiAdminAuditQueryResponseSchema } from './zod/getApiAdminAuditSchema.ts'
-import { getApiAdminProjectsQueryResponseSchema } from './zod/getApiAdminProjectsSchema.ts'
-import { getApiAdminTelemetryQueryResponseSchema } from './zod/getApiAdminTelemetrySchema.ts'
-import { getApiAdminUsersQueryResponseSchema } from './zod/getApiAdminUsersSchema.ts'
-import { getApiAuthAccountInfoQueryResponseSchema } from './zod/getApiAuthAccountInfoSchema.ts'
-import {
-  getApiAuthCallbackIdPathParamsSchema,
-  getApiAuthCallbackIdQueryResponseSchema,
-} from './zod/getApiAuthCallbackIdSchema.ts'
-import {
-  getApiAuthDeleteUserCallbackQueryParamsSchema,
-  getApiAuthDeleteUserCallbackQueryResponseSchema,
-} from './zod/getApiAuthDeleteUserCallbackSchema.ts'
-import { getApiAuthErrorQueryResponseSchema } from './zod/getApiAuthErrorSchema.ts'
-import { getApiAuthOkQueryResponseSchema } from './zod/getApiAuthOkSchema.ts'
-import {
-  getApiAuthVerifyEmailQueryParamsSchema,
-  getApiAuthVerifyEmailQueryResponseSchema,
-} from './zod/getApiAuthVerifyEmailSchema.ts'
-import {
-  getApiProjectsByIdLogsPathParamsSchema,
-  getApiProjectsByIdLogsQueryResponseSchema,
-} from './zod/getApiProjectsByIdLogsSchema.ts'
-import {
-  getApiProjectsByIdPdfPathParamsSchema,
-  getApiProjectsByIdPdfQueryResponseSchema,
-} from './zod/getApiProjectsByIdPdfSchema.ts'
-import {
-  getApiProjectsByIdPathParamsSchema,
-  getApiProjectsByIdQueryResponseSchema,
-} from './zod/getApiProjectsByIdSchema.ts'
-import { getApiProjectsQueryResponseSchema } from './zod/getApiProjectsSchema.ts'
-import { getApiUserMeQueryResponseSchema } from './zod/getApiUserMeSchema.ts'
-import {
-  getSessionPostMutationRequestSchema,
-  getSessionPostMutationResponseSchema,
-} from './zod/getSessionPostSchema.ts'
-import { getSessionQueryResponseSchema } from './zod/getSessionSchema.ts'
-import { getUserQueryParamsSchema, getUserQueryResponseSchema } from './zod/getUserSchema.ts'
-import {
-  impersonateUserMutationRequestSchema,
-  impersonateUserMutationResponseSchema,
-} from './zod/impersonateUserSchema.ts'
-import {
-  linkSocialAccountMutationRequestSchema,
-  linkSocialAccountMutationResponseSchema,
-} from './zod/linkSocialAccountSchema.ts'
-import { listUserAccountsQueryResponseSchema } from './zod/listUserAccountsSchema.ts'
-import { listUserSessionsQueryResponseSchema } from './zod/listUserSessionsSchema.ts'
-import { listUsersQueryParamsSchema, listUsersQueryResponseSchema } from './zod/listUsersSchema.ts'
-import {
-  patchApiAdminUsersByIdQuotaPathParamsSchema,
-  patchApiAdminUsersByIdQuotaMutationRequestSchema,
-  patchApiAdminUsersByIdQuotaMutationResponseSchema,
-} from './zod/patchApiAdminUsersByIdQuotaSchema.ts'
-import {
-  patchApiAdminUsersByIdRolePathParamsSchema,
-  patchApiAdminUsersByIdRoleMutationRequestSchema,
-  patchApiAdminUsersByIdRoleMutationResponseSchema,
-} from './zod/patchApiAdminUsersByIdRoleSchema.ts'
-import {
-  patchApiAdminUsersByIdStatusPathParamsSchema,
-  patchApiAdminUsersByIdStatusMutationRequestSchema,
-  patchApiAdminUsersByIdStatusMutationResponseSchema,
-} from './zod/patchApiAdminUsersByIdStatusSchema.ts'
-import {
-  patchApiProjectsByIdPathParamsSchema,
-  patchApiProjectsByIdMutationRequestSchema,
-  patchApiProjectsByIdMutationResponseSchema,
-} from './zod/patchApiProjectsByIdSchema.ts'
-import {
-  postApiAuthAdminHasPermissionMutationRequestSchema,
-  postApiAuthAdminHasPermissionMutationResponseSchema,
-} from './zod/postApiAuthAdminHasPermissionSchema.ts'
-import { postApiAuthAdminStopImpersonatingMutationResponseSchema } from './zod/postApiAuthAdminStopImpersonatingSchema.ts'
-import {
-  postApiAuthCallbackIdPathParamsSchema,
-  postApiAuthCallbackIdMutationRequestSchema,
-  postApiAuthCallbackIdMutationResponseSchema,
-} from './zod/postApiAuthCallbackIdSchema.ts'
-import {
-  postApiAuthGetAccessTokenMutationRequestSchema,
-  postApiAuthGetAccessTokenMutationResponseSchema,
-} from './zod/postApiAuthGetAccessTokenSchema.ts'
-import {
-  postApiAuthRefreshTokenMutationRequestSchema,
-  postApiAuthRefreshTokenMutationResponseSchema,
-} from './zod/postApiAuthRefreshTokenSchema.ts'
-import {
-  postApiAuthRevokeOtherSessionsMutationRequestSchema,
-  postApiAuthRevokeOtherSessionsMutationResponseSchema,
-} from './zod/postApiAuthRevokeOtherSessionsSchema.ts'
-import {
-  postApiAuthRevokeSessionMutationRequestSchema,
-  postApiAuthRevokeSessionMutationResponseSchema,
-} from './zod/postApiAuthRevokeSessionSchema.ts'
-import {
-  postApiAuthRevokeSessionsMutationRequestSchema,
-  postApiAuthRevokeSessionsMutationResponseSchema,
-} from './zod/postApiAuthRevokeSessionsSchema.ts'
-import {
-  postApiAuthUnlinkAccountMutationRequestSchema,
-  postApiAuthUnlinkAccountMutationResponseSchema,
-} from './zod/postApiAuthUnlinkAccountSchema.ts'
-import {
-  postApiProjectsByIdCompilePathParamsSchema,
-  postApiProjectsByIdCompileMutationRequestSchema,
-  postApiProjectsByIdCompileMutationResponseSchema,
-} from './zod/postApiProjectsByIdCompileSchema.ts'
-import {
-  postApiProjectsByIdFilesPathParamsSchema,
-  postApiProjectsByIdFilesMutationRequestSchema,
-  postApiProjectsByIdFilesMutationResponseSchema,
-} from './zod/postApiProjectsByIdFilesSchema.ts'
-import {
-  postApiProjectsMutationRequestSchema,
-  postApiProjectsMutationResponseSchema,
-} from './zod/postApiProjectsSchema.ts'
-import {
-  putApiProjectsByIdFilesByFileIdPathParamsSchema,
-  putApiProjectsByIdFilesByFileIdMutationRequestSchema,
-  putApiProjectsByIdFilesByFileIdMutationResponseSchema,
-} from './zod/putApiProjectsByIdFilesByFileIdSchema.ts'
-import {
-  removeUserMutationRequestSchema,
-  removeUserMutationResponseSchema,
-} from './zod/removeUserSchema.ts'
-import {
-  requestPasswordResetMutationRequestSchema,
-  requestPasswordResetMutationResponseSchema,
-} from './zod/requestPasswordResetSchema.ts'
-import {
-  resetPasswordCallbackPathParamsSchema,
-  resetPasswordCallbackQueryParamsSchema,
-  resetPasswordCallbackQueryResponseSchema,
-} from './zod/resetPasswordCallbackSchema.ts'
-import {
-  resetPasswordMutationRequestSchema,
-  resetPasswordMutationResponseSchema,
-} from './zod/resetPasswordSchema.ts'
-import {
-  revokeUserSessionMutationRequestSchema,
-  revokeUserSessionMutationResponseSchema,
-} from './zod/revokeUserSessionSchema.ts'
-import {
-  revokeUserSessionsMutationRequestSchema,
-  revokeUserSessionsMutationResponseSchema,
-} from './zod/revokeUserSessionsSchema.ts'
-import {
-  sendVerificationEmailMutationRequestSchema,
-  sendVerificationEmailMutationResponseSchema,
-} from './zod/sendVerificationEmailSchema.ts'
-import {
-  setUserPasswordMutationRequestSchema,
-  setUserPasswordMutationResponseSchema,
-} from './zod/setUserPasswordSchema.ts'
-import {
-  setUserRoleMutationRequestSchema,
-  setUserRoleMutationResponseSchema,
-} from './zod/setUserRoleSchema.ts'
-import {
-  signInEmailMutationRequestSchema,
-  signInEmailMutationResponseSchema,
-} from './zod/signInEmailSchema.ts'
-import { signOutMutationRequestSchema, signOutMutationResponseSchema } from './zod/signOutSchema.ts'
-import {
-  signUpWithEmailAndPasswordMutationRequestSchema,
-  signUpWithEmailAndPasswordMutationResponseSchema,
-} from './zod/signUpWithEmailAndPasswordSchema.ts'
-import {
-  socialSignInMutationRequestSchema,
-  socialSignInMutationResponseSchema,
-} from './zod/socialSignInSchema.ts'
-import {
-  unbanUserMutationRequestSchema,
-  unbanUserMutationResponseSchema,
-} from './zod/unbanUserSchema.ts'
-import {
-  updateSessionMutationRequestSchema,
-  updateSessionMutationResponseSchema,
-} from './zod/updateSessionSchema.ts'
-import {
-  updateUserMutationRequestSchema,
-  updateUserMutationResponseSchema,
-} from './zod/updateUserSchema.ts'
-import {
-  verifyPasswordMutationRequestSchema,
-  verifyPasswordMutationResponseSchema,
-} from './zod/verifyPasswordSchema.ts'
+import * as z from 'zod'
+import { adminListUserSessionsBodySchema, adminListUserSessionsResponseSchema } from './zod/adminListUserSessionsSchema'
+import { adminUpdateUserBodySchema, adminUpdateUserResponseSchema } from './zod/adminUpdateUserSchema'
+import { banUserBodySchema, banUserResponseSchema } from './zod/banUserSchema'
+import { changeEmailBodySchema, changeEmailResponseSchema } from './zod/changeEmailSchema'
+import { changePasswordBodySchema, changePasswordResponseSchema } from './zod/changePasswordSchema'
+import { createUserBodySchema, createUserResponseSchema } from './zod/createUserSchema'
+import { deleteApiProjectsByIdFilesByFileIdPathFileIdSchema, deleteApiProjectsByIdFilesByFileIdPathIdSchema } from './zod/deleteApiProjectsByIdFilesByFileIdSchema'
+import { deleteApiProjectsByIdPathIdSchema } from './zod/deleteApiProjectsByIdSchema'
+import { deleteUserBodySchema, deleteUserResponseSchema } from './zod/deleteUserSchema'
+import { getApiAuthAccountInfoResponseSchema } from './zod/getApiAuthAccountInfoSchema'
+import { getApiAuthCallbackIdPathIdSchema, getApiAuthCallbackIdResponseSchema } from './zod/getApiAuthCallbackIdSchema'
+import { getApiAuthDeleteUserCallbackQueryCallbackURLSchema, getApiAuthDeleteUserCallbackQueryTokenSchema, getApiAuthDeleteUserCallbackResponseSchema } from './zod/getApiAuthDeleteUserCallbackSchema'
+import { getApiAuthErrorResponseSchema } from './zod/getApiAuthErrorSchema'
+import { getApiAuthOkResponseSchema } from './zod/getApiAuthOkSchema'
+import { getApiAuthVerifyEmailQueryCallbackURLSchema, getApiAuthVerifyEmailQueryTokenSchema, getApiAuthVerifyEmailResponseSchema } from './zod/getApiAuthVerifyEmailSchema'
+import { getApiProjectsByIdLogsPathIdSchema } from './zod/getApiProjectsByIdLogsSchema'
+import { getApiProjectsByIdPdfPathIdSchema } from './zod/getApiProjectsByIdPdfSchema'
+import { getApiProjectsByIdPathIdSchema } from './zod/getApiProjectsByIdSchema'
+import { getSessionPostBodySchema, getSessionPostResponseSchema } from './zod/getSessionPostSchema'
+import { getSessionResponseSchema } from './zod/getSessionSchema'
+import { getUserQueryIdSchema, getUserResponseSchema } from './zod/getUserSchema'
+import { impersonateUserBodySchema, impersonateUserResponseSchema } from './zod/impersonateUserSchema'
+import { linkSocialAccountBodySchema, linkSocialAccountResponseSchema } from './zod/linkSocialAccountSchema'
+import { listUserAccountsResponseSchema } from './zod/listUserAccountsSchema'
+import { listUserSessionsResponseSchema } from './zod/listUserSessionsSchema'
+import { listUsersQueryFilterFieldSchema, listUsersQueryFilterOperatorSchema, listUsersQueryFilterValueSchema, listUsersQueryLimitSchema, listUsersQueryOffsetSchema, listUsersQuerySearchFieldSchema, listUsersQuerySearchOperatorSchema, listUsersQuerySearchValueSchema, listUsersQuerySortBySchema, listUsersQuerySortDirectionSchema, listUsersResponseSchema } from './zod/listUsersSchema'
+import { patchApiAdminUsersByIdQuotaPathIdSchema } from './zod/patchApiAdminUsersByIdQuotaSchema'
+import { patchApiAdminUsersByIdRolePathIdSchema } from './zod/patchApiAdminUsersByIdRoleSchema'
+import { patchApiAdminUsersByIdStatusPathIdSchema } from './zod/patchApiAdminUsersByIdStatusSchema'
+import { patchApiProjectsByIdPathIdSchema } from './zod/patchApiProjectsByIdSchema'
+import { postApiAuthAdminHasPermissionBodySchema, postApiAuthAdminHasPermissionResponseSchema } from './zod/postApiAuthAdminHasPermissionSchema'
+import { postApiAuthAdminStopImpersonatingResponseSchema } from './zod/postApiAuthAdminStopImpersonatingSchema'
+import { postApiAuthCallbackIdBodySchema, postApiAuthCallbackIdPathIdSchema, postApiAuthCallbackIdResponseSchema } from './zod/postApiAuthCallbackIdSchema'
+import { postApiAuthGetAccessTokenBodySchema, postApiAuthGetAccessTokenResponseSchema } from './zod/postApiAuthGetAccessTokenSchema'
+import { postApiAuthRefreshTokenBodySchema, postApiAuthRefreshTokenResponseSchema } from './zod/postApiAuthRefreshTokenSchema'
+import { postApiAuthRevokeOtherSessionsBodySchema, postApiAuthRevokeOtherSessionsResponseSchema } from './zod/postApiAuthRevokeOtherSessionsSchema'
+import { postApiAuthRevokeSessionBodySchema, postApiAuthRevokeSessionResponseSchema } from './zod/postApiAuthRevokeSessionSchema'
+import { postApiAuthRevokeSessionsBodySchema, postApiAuthRevokeSessionsResponseSchema } from './zod/postApiAuthRevokeSessionsSchema'
+import { postApiAuthUnlinkAccountBodySchema, postApiAuthUnlinkAccountResponseSchema } from './zod/postApiAuthUnlinkAccountSchema'
+import { postApiProjectsByIdCompilePathIdSchema } from './zod/postApiProjectsByIdCompileSchema'
+import { postApiProjectsByIdFilesPathIdSchema } from './zod/postApiProjectsByIdFilesSchema'
+import { putApiProjectsByIdFilesByFileIdPathFileIdSchema, putApiProjectsByIdFilesByFileIdPathIdSchema } from './zod/putApiProjectsByIdFilesByFileIdSchema'
+import { removeUserBodySchema, removeUserResponseSchema } from './zod/removeUserSchema'
+import { requestPasswordResetBodySchema, requestPasswordResetResponseSchema } from './zod/requestPasswordResetSchema'
+import { resetPasswordCallbackPathTokenSchema, resetPasswordCallbackQueryCallbackURLSchema, resetPasswordCallbackResponseSchema } from './zod/resetPasswordCallbackSchema'
+import { resetPasswordBodySchema, resetPasswordResponseSchema } from './zod/resetPasswordSchema'
+import { revokeUserSessionBodySchema, revokeUserSessionResponseSchema } from './zod/revokeUserSessionSchema'
+import { revokeUserSessionsBodySchema, revokeUserSessionsResponseSchema } from './zod/revokeUserSessionsSchema'
+import { sendVerificationEmailBodySchema, sendVerificationEmailResponseSchema } from './zod/sendVerificationEmailSchema'
+import { setUserPasswordBodySchema, setUserPasswordResponseSchema } from './zod/setUserPasswordSchema'
+import { setUserRoleBodySchema, setUserRoleResponseSchema } from './zod/setUserRoleSchema'
+import { signInEmailBodySchema, signInEmailResponseSchema } from './zod/signInEmailSchema'
+import { signOutBodySchema, signOutResponseSchema } from './zod/signOutSchema'
+import { signUpWithEmailAndPasswordBodySchema, signUpWithEmailAndPasswordResponseSchema } from './zod/signUpWithEmailAndPasswordSchema'
+import { socialSignInBodySchema, socialSignInResponseSchema } from './zod/socialSignInSchema'
+import { unbanUserBodySchema, unbanUserResponseSchema } from './zod/unbanUserSchema'
+import { updateSessionBodySchema, updateSessionResponseSchema } from './zod/updateSessionSchema'
+import { updateUserBodySchema, updateUserResponseSchema } from './zod/updateUserSchema'
+import { verifyPasswordBodySchema, verifyPasswordResponseSchema } from './zod/verifyPasswordSchema'
 import { createSchema } from '@better-fetch/fetch'
 
-export const betterFetchSchema = createSchema(
-  {
-    '@get/user/me': {
-      output: getApiUserMeQueryResponseSchema,
-    },
-    '@get/projects': {
-      output: getApiProjectsQueryResponseSchema,
-    },
-    '@post/projects': {
-      input: postApiProjectsMutationRequestSchema,
-      output: postApiProjectsMutationResponseSchema,
-    },
-    '@get/projects/:id': {
-      params: getApiProjectsByIdPathParamsSchema,
-      output: getApiProjectsByIdQueryResponseSchema,
-    },
-    '@patch/projects/:id': {
-      params: patchApiProjectsByIdPathParamsSchema,
-      input: patchApiProjectsByIdMutationRequestSchema,
-      output: patchApiProjectsByIdMutationResponseSchema,
-    },
-    '@delete/projects/:id': {
-      params: deleteApiProjectsByIdPathParamsSchema,
-      output: deleteApiProjectsByIdMutationResponseSchema,
-    },
-    '@post/projects/:id/files': {
-      params: postApiProjectsByIdFilesPathParamsSchema,
-      input: postApiProjectsByIdFilesMutationRequestSchema,
-      output: postApiProjectsByIdFilesMutationResponseSchema,
-    },
-    '@put/projects/:id/files/:fileId': {
-      params: putApiProjectsByIdFilesByFileIdPathParamsSchema,
-      input: putApiProjectsByIdFilesByFileIdMutationRequestSchema,
-      output: putApiProjectsByIdFilesByFileIdMutationResponseSchema,
-    },
-    '@delete/projects/:id/files/:fileId': {
-      params: deleteApiProjectsByIdFilesByFileIdPathParamsSchema,
-      output: deleteApiProjectsByIdFilesByFileIdMutationResponseSchema,
-    },
-    '@post/projects/:id/compile': {
-      params: postApiProjectsByIdCompilePathParamsSchema,
-      input: postApiProjectsByIdCompileMutationRequestSchema,
-      output: postApiProjectsByIdCompileMutationResponseSchema,
-    },
-    '@get/projects/:id/pdf': {
-      params: getApiProjectsByIdPdfPathParamsSchema,
-      output: getApiProjectsByIdPdfQueryResponseSchema,
-    },
-    '@get/projects/:id/logs': {
-      params: getApiProjectsByIdLogsPathParamsSchema,
-      output: getApiProjectsByIdLogsQueryResponseSchema,
-    },
-    '@get/admin/users': {
-      output: getApiAdminUsersQueryResponseSchema,
-    },
-    '@patch/admin/users/:id/quota': {
-      params: patchApiAdminUsersByIdQuotaPathParamsSchema,
-      input: patchApiAdminUsersByIdQuotaMutationRequestSchema,
-      output: patchApiAdminUsersByIdQuotaMutationResponseSchema,
-    },
-    '@patch/admin/users/:id/status': {
-      params: patchApiAdminUsersByIdStatusPathParamsSchema,
-      input: patchApiAdminUsersByIdStatusMutationRequestSchema,
-      output: patchApiAdminUsersByIdStatusMutationResponseSchema,
-    },
-    '@patch/admin/users/:id/role': {
-      params: patchApiAdminUsersByIdRolePathParamsSchema,
-      input: patchApiAdminUsersByIdRoleMutationRequestSchema,
-      output: patchApiAdminUsersByIdRoleMutationResponseSchema,
-    },
-    '@get/admin/projects': {
-      output: getApiAdminProjectsQueryResponseSchema,
-    },
-    '@get/admin/telemetry': {
-      output: getApiAdminTelemetryQueryResponseSchema,
-    },
-    '@get/admin/audit': {
-      output: getApiAdminAuditQueryResponseSchema,
-    },
-    '@post/auth/sign-in/social': {
-      input: socialSignInMutationRequestSchema,
-      output: socialSignInMutationResponseSchema,
-    },
-    '@get/auth/callback/:id': {
-      params: getApiAuthCallbackIdPathParamsSchema,
-      output: getApiAuthCallbackIdQueryResponseSchema,
-    },
-    '@post/auth/callback/:id': {
-      params: postApiAuthCallbackIdPathParamsSchema,
-      input: postApiAuthCallbackIdMutationRequestSchema,
-      output: postApiAuthCallbackIdMutationResponseSchema,
-    },
-    '@get/auth/get-session': {
-      output: getSessionQueryResponseSchema,
-    },
-    '@post/auth/get-session': {
-      input: getSessionPostMutationRequestSchema,
-      output: getSessionPostMutationResponseSchema,
-    },
-    '@post/auth/sign-out': {
-      input: signOutMutationRequestSchema,
-      output: signOutMutationResponseSchema,
-    },
-    '@post/auth/sign-up/email': {
-      input: signUpWithEmailAndPasswordMutationRequestSchema,
-      output: signUpWithEmailAndPasswordMutationResponseSchema,
-    },
-    '@post/auth/sign-in/email': {
-      input: signInEmailMutationRequestSchema,
-      output: signInEmailMutationResponseSchema,
-    },
-    '@post/auth/reset-password': {
-      input: resetPasswordMutationRequestSchema,
-      output: resetPasswordMutationResponseSchema,
-    },
-    '@post/auth/verify-password': {
-      input: verifyPasswordMutationRequestSchema,
-      output: verifyPasswordMutationResponseSchema,
-    },
-    '@get/auth/verify-email': {
-      query: getApiAuthVerifyEmailQueryParamsSchema,
-      output: getApiAuthVerifyEmailQueryResponseSchema,
-    },
-    '@post/auth/send-verification-email': {
-      input: sendVerificationEmailMutationRequestSchema,
-      output: sendVerificationEmailMutationResponseSchema,
-    },
-    '@post/auth/change-email': {
-      input: changeEmailMutationRequestSchema,
-      output: changeEmailMutationResponseSchema,
-    },
-    '@post/auth/change-password': {
-      input: changePasswordMutationRequestSchema,
-      output: changePasswordMutationResponseSchema,
-    },
-    '@post/auth/update-session': {
-      input: updateSessionMutationRequestSchema,
-      output: updateSessionMutationResponseSchema,
-    },
-    '@post/auth/update-user': {
-      input: updateUserMutationRequestSchema,
-      output: updateUserMutationResponseSchema,
-    },
-    '@post/auth/delete-user': {
-      input: deleteUserMutationRequestSchema,
-      output: deleteUserMutationResponseSchema,
-    },
-    '@post/auth/request-password-reset': {
-      input: requestPasswordResetMutationRequestSchema,
-      output: requestPasswordResetMutationResponseSchema,
-    },
-    '@get/auth/reset-password/:token': {
-      params: resetPasswordCallbackPathParamsSchema,
-      query: resetPasswordCallbackQueryParamsSchema,
-      output: resetPasswordCallbackQueryResponseSchema,
-    },
-    '@get/auth/list-sessions': {
-      output: listUserSessionsQueryResponseSchema,
-    },
-    '@post/auth/revoke-session': {
-      input: postApiAuthRevokeSessionMutationRequestSchema,
-      output: postApiAuthRevokeSessionMutationResponseSchema,
-    },
-    '@post/auth/revoke-sessions': {
-      input: postApiAuthRevokeSessionsMutationRequestSchema,
-      output: postApiAuthRevokeSessionsMutationResponseSchema,
-    },
-    '@post/auth/revoke-other-sessions': {
-      input: postApiAuthRevokeOtherSessionsMutationRequestSchema,
-      output: postApiAuthRevokeOtherSessionsMutationResponseSchema,
-    },
-    '@post/auth/link-social': {
-      input: linkSocialAccountMutationRequestSchema,
-      output: linkSocialAccountMutationResponseSchema,
-    },
-    '@get/auth/list-accounts': {
-      output: listUserAccountsQueryResponseSchema,
-    },
-    '@get/auth/delete-user/callback': {
-      query: getApiAuthDeleteUserCallbackQueryParamsSchema,
-      output: getApiAuthDeleteUserCallbackQueryResponseSchema,
-    },
-    '@post/auth/unlink-account': {
-      input: postApiAuthUnlinkAccountMutationRequestSchema,
-      output: postApiAuthUnlinkAccountMutationResponseSchema,
-    },
-    '@post/auth/refresh-token': {
-      input: postApiAuthRefreshTokenMutationRequestSchema,
-      output: postApiAuthRefreshTokenMutationResponseSchema,
-    },
-    '@post/auth/get-access-token': {
-      input: postApiAuthGetAccessTokenMutationRequestSchema,
-      output: postApiAuthGetAccessTokenMutationResponseSchema,
-    },
-    '@get/auth/account-info': {
-      output: getApiAuthAccountInfoQueryResponseSchema,
-    },
-    '@get/auth/ok': {
-      output: getApiAuthOkQueryResponseSchema,
-    },
-    '@get/auth/error': {
-      output: getApiAuthErrorQueryResponseSchema,
-    },
-    '@post/auth/admin/set-role': {
-      input: setUserRoleMutationRequestSchema,
-      output: setUserRoleMutationResponseSchema,
-    },
-    '@get/auth/admin/get-user': {
-      query: getUserQueryParamsSchema,
-      output: getUserQueryResponseSchema,
-    },
-    '@post/auth/admin/create-user': {
-      input: createUserMutationRequestSchema,
-      output: createUserMutationResponseSchema,
-    },
-    '@post/auth/admin/update-user': {
-      input: adminUpdateUserMutationRequestSchema,
-      output: adminUpdateUserMutationResponseSchema,
-    },
-    '@get/auth/admin/list-users': {
-      query: listUsersQueryParamsSchema,
-      output: listUsersQueryResponseSchema,
-    },
-    '@post/auth/admin/list-user-sessions': {
-      input: adminListUserSessionsMutationRequestSchema,
-      output: adminListUserSessionsMutationResponseSchema,
-    },
-    '@post/auth/admin/unban-user': {
-      input: unbanUserMutationRequestSchema,
-      output: unbanUserMutationResponseSchema,
-    },
-    '@post/auth/admin/ban-user': {
-      input: banUserMutationRequestSchema,
-      output: banUserMutationResponseSchema,
-    },
-    '@post/auth/admin/impersonate-user': {
-      input: impersonateUserMutationRequestSchema,
-      output: impersonateUserMutationResponseSchema,
-    },
-    '@post/auth/admin/stop-impersonating': {
-      output: postApiAuthAdminStopImpersonatingMutationResponseSchema,
-    },
-    '@post/auth/admin/revoke-user-session': {
-      input: revokeUserSessionMutationRequestSchema,
-      output: revokeUserSessionMutationResponseSchema,
-    },
-    '@post/auth/admin/revoke-user-sessions': {
-      input: revokeUserSessionsMutationRequestSchema,
-      output: revokeUserSessionsMutationResponseSchema,
-    },
-    '@post/auth/admin/remove-user': {
-      input: removeUserMutationRequestSchema,
-      output: removeUserMutationResponseSchema,
-    },
-    '@post/auth/admin/set-user-password': {
-      input: setUserPasswordMutationRequestSchema,
-      output: setUserPasswordMutationResponseSchema,
-    },
-    '@post/auth/admin/has-permission': {
-      input: postApiAuthAdminHasPermissionMutationRequestSchema,
-      output: postApiAuthAdminHasPermissionMutationResponseSchema,
-    },
+export const betterFetchSchema = createSchema({
+  "@get/user/me": {
+
   },
-  { strict: true },
-)
+  "@get/projects": {
+
+  },
+  "@post/projects": {
+
+  },
+  "@get/projects/:id": {
+    params: z.object({ "id": getApiProjectsByIdPathIdSchema }),
+  },
+  "@patch/projects/:id": {
+    params: z.object({ "id": patchApiProjectsByIdPathIdSchema }),
+  },
+  "@delete/projects/:id": {
+    params: z.object({ "id": deleteApiProjectsByIdPathIdSchema }),
+  },
+  "@post/projects/:id/files": {
+    params: z.object({ "id": postApiProjectsByIdFilesPathIdSchema }),
+  },
+  "@put/projects/:id/files/:fileId": {
+    params: z.object({ "id": putApiProjectsByIdFilesByFileIdPathIdSchema, "fileId": putApiProjectsByIdFilesByFileIdPathFileIdSchema }),
+  },
+  "@delete/projects/:id/files/:fileId": {
+    params: z.object({ "id": deleteApiProjectsByIdFilesByFileIdPathIdSchema, "fileId": deleteApiProjectsByIdFilesByFileIdPathFileIdSchema }),
+  },
+  "@post/projects/:id/compile": {
+    params: z.object({ "id": postApiProjectsByIdCompilePathIdSchema }),
+  },
+  "@get/projects/:id/pdf": {
+    params: z.object({ "id": getApiProjectsByIdPdfPathIdSchema }),
+  },
+  "@get/projects/:id/logs": {
+    params: z.object({ "id": getApiProjectsByIdLogsPathIdSchema }),
+  },
+  "@get/admin/users": {
+
+  },
+  "@patch/admin/users/:id/quota": {
+    params: z.object({ "id": patchApiAdminUsersByIdQuotaPathIdSchema }),
+  },
+  "@patch/admin/users/:id/status": {
+    params: z.object({ "id": patchApiAdminUsersByIdStatusPathIdSchema }),
+  },
+  "@patch/admin/users/:id/role": {
+    params: z.object({ "id": patchApiAdminUsersByIdRolePathIdSchema }),
+  },
+  "@get/admin/projects": {
+
+  },
+  "@get/admin/telemetry": {
+
+  },
+  "@get/admin/audit": {
+
+  },
+  "@post/auth/sign-in/social": {
+    input: socialSignInBodySchema,
+    output: socialSignInResponseSchema,
+  },
+  "@get/auth/callback/:id": {
+    params: z.object({ "id": getApiAuthCallbackIdPathIdSchema }),
+    output: getApiAuthCallbackIdResponseSchema,
+  },
+  "@post/auth/callback/:id": {
+    params: z.object({ "id": postApiAuthCallbackIdPathIdSchema }),
+    input: postApiAuthCallbackIdBodySchema,
+    output: postApiAuthCallbackIdResponseSchema,
+  },
+  "@get/auth/get-session": {
+    output: getSessionResponseSchema,
+  },
+  "@post/auth/get-session": {
+    input: getSessionPostBodySchema,
+    output: getSessionPostResponseSchema,
+  },
+  "@post/auth/sign-out": {
+    input: signOutBodySchema,
+    output: signOutResponseSchema,
+  },
+  "@post/auth/sign-up/email": {
+    input: signUpWithEmailAndPasswordBodySchema,
+    output: signUpWithEmailAndPasswordResponseSchema,
+  },
+  "@post/auth/sign-in/email": {
+    input: signInEmailBodySchema,
+    output: signInEmailResponseSchema,
+  },
+  "@post/auth/reset-password": {
+    input: resetPasswordBodySchema,
+    output: resetPasswordResponseSchema,
+  },
+  "@post/auth/verify-password": {
+    input: verifyPasswordBodySchema,
+    output: verifyPasswordResponseSchema,
+  },
+  "@get/auth/verify-email": {
+    query: z.object({ "token": getApiAuthVerifyEmailQueryTokenSchema, "callbackURL": getApiAuthVerifyEmailQueryCallbackURLSchema.optional() }),
+    output: getApiAuthVerifyEmailResponseSchema,
+  },
+  "@post/auth/send-verification-email": {
+    input: sendVerificationEmailBodySchema,
+    output: sendVerificationEmailResponseSchema,
+  },
+  "@post/auth/change-email": {
+    input: changeEmailBodySchema,
+    output: changeEmailResponseSchema,
+  },
+  "@post/auth/change-password": {
+    input: changePasswordBodySchema,
+    output: changePasswordResponseSchema,
+  },
+  "@post/auth/update-session": {
+    input: updateSessionBodySchema,
+    output: updateSessionResponseSchema,
+  },
+  "@post/auth/update-user": {
+    input: updateUserBodySchema,
+    output: updateUserResponseSchema,
+  },
+  "@post/auth/delete-user": {
+    input: deleteUserBodySchema,
+    output: deleteUserResponseSchema,
+  },
+  "@post/auth/request-password-reset": {
+    input: requestPasswordResetBodySchema,
+    output: requestPasswordResetResponseSchema,
+  },
+  "@get/auth/reset-password/:token": {
+    params: z.object({ "token": resetPasswordCallbackPathTokenSchema }),
+    query: z.object({ "callbackURL": resetPasswordCallbackQueryCallbackURLSchema }),
+    output: resetPasswordCallbackResponseSchema,
+  },
+  "@get/auth/list-sessions": {
+    output: listUserSessionsResponseSchema,
+  },
+  "@post/auth/revoke-session": {
+    input: postApiAuthRevokeSessionBodySchema,
+    output: postApiAuthRevokeSessionResponseSchema,
+  },
+  "@post/auth/revoke-sessions": {
+    input: postApiAuthRevokeSessionsBodySchema,
+    output: postApiAuthRevokeSessionsResponseSchema,
+  },
+  "@post/auth/revoke-other-sessions": {
+    input: postApiAuthRevokeOtherSessionsBodySchema,
+    output: postApiAuthRevokeOtherSessionsResponseSchema,
+  },
+  "@post/auth/link-social": {
+    input: linkSocialAccountBodySchema,
+    output: linkSocialAccountResponseSchema,
+  },
+  "@get/auth/list-accounts": {
+    output: listUserAccountsResponseSchema,
+  },
+  "@get/auth/delete-user/callback": {
+    query: z.object({ "token": getApiAuthDeleteUserCallbackQueryTokenSchema.optional(), "callbackURL": getApiAuthDeleteUserCallbackQueryCallbackURLSchema.optional() }),
+    output: getApiAuthDeleteUserCallbackResponseSchema,
+  },
+  "@post/auth/unlink-account": {
+    input: postApiAuthUnlinkAccountBodySchema,
+    output: postApiAuthUnlinkAccountResponseSchema,
+  },
+  "@post/auth/refresh-token": {
+    input: postApiAuthRefreshTokenBodySchema,
+    output: postApiAuthRefreshTokenResponseSchema,
+  },
+  "@post/auth/get-access-token": {
+    input: postApiAuthGetAccessTokenBodySchema,
+    output: postApiAuthGetAccessTokenResponseSchema,
+  },
+  "@get/auth/account-info": {
+    output: getApiAuthAccountInfoResponseSchema,
+  },
+  "@get/auth/ok": {
+    output: getApiAuthOkResponseSchema,
+  },
+  "@get/auth/error": {
+    output: getApiAuthErrorResponseSchema,
+  },
+  "@post/auth/admin/set-role": {
+    input: setUserRoleBodySchema,
+    output: setUserRoleResponseSchema,
+  },
+  "@get/auth/admin/get-user": {
+    query: z.object({ "id": getUserQueryIdSchema.optional() }),
+    output: getUserResponseSchema,
+  },
+  "@post/auth/admin/create-user": {
+    input: createUserBodySchema,
+    output: createUserResponseSchema,
+  },
+  "@post/auth/admin/update-user": {
+    input: adminUpdateUserBodySchema,
+    output: adminUpdateUserResponseSchema,
+  },
+  "@get/auth/admin/list-users": {
+    query: z.object({ "searchValue": listUsersQuerySearchValueSchema.optional(), "searchField": listUsersQuerySearchFieldSchema.optional(), "searchOperator": listUsersQuerySearchOperatorSchema.optional(), "limit": listUsersQueryLimitSchema.optional(), "offset": listUsersQueryOffsetSchema.optional(), "sortBy": listUsersQuerySortBySchema.optional(), "sortDirection": listUsersQuerySortDirectionSchema.optional(), "filterField": listUsersQueryFilterFieldSchema.optional(), "filterValue": listUsersQueryFilterValueSchema.optional(), "filterOperator": listUsersQueryFilterOperatorSchema.optional() }),
+    output: listUsersResponseSchema,
+  },
+  "@post/auth/admin/list-user-sessions": {
+    input: adminListUserSessionsBodySchema,
+    output: adminListUserSessionsResponseSchema,
+  },
+  "@post/auth/admin/unban-user": {
+    input: unbanUserBodySchema,
+    output: unbanUserResponseSchema,
+  },
+  "@post/auth/admin/ban-user": {
+    input: banUserBodySchema,
+    output: banUserResponseSchema,
+  },
+  "@post/auth/admin/impersonate-user": {
+    input: impersonateUserBodySchema,
+    output: impersonateUserResponseSchema,
+  },
+  "@post/auth/admin/stop-impersonating": {
+    output: postApiAuthAdminStopImpersonatingResponseSchema,
+  },
+  "@post/auth/admin/revoke-user-session": {
+    input: revokeUserSessionBodySchema,
+    output: revokeUserSessionResponseSchema,
+  },
+  "@post/auth/admin/revoke-user-sessions": {
+    input: revokeUserSessionsBodySchema,
+    output: revokeUserSessionsResponseSchema,
+  },
+  "@post/auth/admin/remove-user": {
+    input: removeUserBodySchema,
+    output: removeUserResponseSchema,
+  },
+  "@post/auth/admin/set-user-password": {
+    input: setUserPasswordBodySchema,
+    output: setUserPasswordResponseSchema,
+  },
+  "@post/auth/admin/has-permission": {
+    input: postApiAuthAdminHasPermissionBodySchema,
+    output: postApiAuthAdminHasPermissionResponseSchema,
+  },
+}, { strict: true })
