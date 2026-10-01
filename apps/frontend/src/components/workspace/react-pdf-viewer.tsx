@@ -7,9 +7,10 @@ import {
 	ZoomIn,
 	ZoomOut,
 } from 'lucide-react'
-import * as pdfjs from 'pdfjs-dist'
 import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist'
+import * as pdfjs from 'pdfjs-dist'
 import { useEffect, useRef, useState } from 'react'
+
 import { Button } from '#/components/ui/button'
 import './pdf-text-layer.css'
 
@@ -283,15 +284,13 @@ export function ReactPdfViewer({
 
 					{/* Download */}
 					<Button
-						asChild
+						render={<a href={url} download={`underleaf-${projectId}.pdf`} />}
 						variant='outline'
 						size='sm'
 						className='h-7 border-zinc-700 bg-zinc-800 text-xs text-zinc-200 hover:bg-zinc-700'
 					>
-						<a href={url} download={`underleaf-${projectId}.pdf`}>
-							<Download className='mr-1.5 h-3 w-3' />
-							Download
-						</a>
+						<Download className='mr-1.5 h-3 w-3' />
+						Download
 					</Button>
 				</div>
 			</div>

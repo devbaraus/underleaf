@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { ArrowLeft, Check, Play, Save } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowLeft, Check, FolderUp, Play, Save, Upload } from 'lucide-react'
+import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { toast } from 'sonner'
 
@@ -12,6 +12,34 @@ import { MonacoLatexEditor } from '#/components/workspace/monaco-editor'
 import { PdfPreviewer } from '#/components/workspace/pdf-previewer'
 import { appConfig } from '#/config'
 
+const UPLOAD_ACCEPT = '.tex,.bib,image/*'
+const TEXT_FILE_EXTENSIONS = new Set(['tex', 'bib'])
+const IMAGE_FILE_EXTENSIONS = new Set([
+	'png',
+	'jpg',
+	'jpeg',
+	'gif',
+	'webp',
+	'bmp',
+	'svg',
+])
+
+function getFileExtension(fileName: string) {
+	return fileName.split('.').pop()?.toLowerCase() || ''
+}
+
+function readFileAsBase64(file: File) {
+	return new Promise<string>((resolve, reject) => {
+		const reader = new FileReader()
+		reader.onload = () => {
+			const result = String(reader.result)
+			resolve(result.slice(result.indexOf(',') + 1))
+		}
+		reader.onerror = () => reject(new Error(`Falha ao ler ${file.name}`))
+		reader.readAsDataURL(file)
+	})
+}
+
 export const Route = createFileRoute('/(app)/projects/$projectId')({
 	component: WorkspacePage,
 })
@@ -19,6 +47,8 @@ export const Route = createFileRoute('/(app)/projects/$projectId')({
 function WorkspacePage() {
 	const { projectId } = Route.useParams()
 	const queryClient = useQueryClient()
+	const uploadInputRef = useRef<HTMLInputElement>(null)
+	const folderUploadInputRef = useRef<HTMLInputElement>(null)
 
 	const [activeFile, setActiveFile] = useState<string>('main.tex')
 	const [editorContent, setEditorContent] = useState<string>('')
@@ -118,7 +148,70 @@ function WorkspacePage() {
 		},
 	})
 
-	// 5. Compilação LaTeX com Tectonic
+	// 5. Envia arquivos mantendo os caminhos e subdiretórios reais
+	const uploadFilesMutation = useMutation({
+		mutationFn: async (files: File[]) => {
+			const uploadedFiles: Array<{ path: string; type: string }> = []
+
+			for (const file of files) {
+				const path = file.webkitRelativePath || file.name
+				const extension = getFileExtension(file.name)
+				const isTextFile = TEXT_FILE_EXTENSIONS.has(extension)
+				const isImage =
+					file.type.startsWith('image/') || IMAGE_FILE_EXTENSIONS.has(extension)
+
+				if (!isTextFile && !isImage) {
+					throw new Error(`Formato não permitido: ${path}`)
+				}
+
+				const content = isTextFile
+					? await file.text()
+					: await readFileAsBase64(file)
+				const res = await fetch(
+					`${appConfig.apiUrl}/api/projects/${projectId}/files`,
+					{
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'include',
+						body: JSON.stringify({
+							name: file.name,
+							path,
+							content,
+							type: isTextFile ? extension : 'image',
+						}),
+					},
+				)
+
+				if (!res.ok) {
+					throw new Error(
+						res.status === 409
+							? `O arquivo ${path} já existe`
+							: `Falha ao enviar ${path}`,
+					)
+				}
+
+				uploadedFiles.push(await res.json())
+			}
+
+			return uploadedFiles
+		},
+		onSuccess: (uploadedFiles) => {
+			queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+			const firstEditableFile = uploadedFiles.find((file) =>
+				TEXT_FILE_EXTENSIONS.has(file.type),
+			)
+			if (firstEditableFile) setActiveFile(firstEditableFile.path)
+			toast.success(
+				`${uploadedFiles.length} arquivo${uploadedFiles.length === 1 ? '' : 's'} enviado${uploadedFiles.length === 1 ? '' : 's'}!`,
+			)
+		},
+		onError: (err: Error) => {
+			queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+			toast.error(err.message || 'Erro ao enviar arquivos')
+		},
+	})
+
+	// 6. Compilação LaTeX com Tectonic
 	const compileMutation = useMutation({
 		mutationFn: async () => {
 			const res = await fetch(
@@ -162,6 +255,12 @@ function WorkspacePage() {
 		compileMutation.mutate()
 	}
 
+	const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+		const files = Array.from(event.target.files || [])
+		if (files.length) uploadFilesMutation.mutate(files)
+		event.target.value = ''
+	}
+
 	if (isLoading) {
 		return (
 			<div className='flex h-screen items-center justify-center bg-zinc-950 text-sm text-zinc-400'>
@@ -176,15 +275,13 @@ function WorkspacePage() {
 			<div className='flex h-11 items-center justify-between border-b border-zinc-800 bg-zinc-900/70 px-3'>
 				<div className='flex items-center space-x-3'>
 					<Button
-						asChild
+						render={<Link to='/projects' />}
 						variant='ghost'
 						size='sm'
 						className='h-7 px-2 text-xs text-zinc-400 hover:text-zinc-200'
 					>
-						<Link to='/projects'>
-							<ArrowLeft className='mr-1 h-3.5 w-3.5' />
-							Projetos
-						</Link>
+						<ArrowLeft className='mr-1 h-3.5 w-3.5' />
+						Projetos
 					</Button>
 
 					<span className='text-zinc-700'>|</span>
@@ -201,6 +298,46 @@ function WorkspacePage() {
 				</div>
 
 				<div className='flex items-center space-x-2'>
+					<input
+						ref={uploadInputRef}
+						type='file'
+						accept={UPLOAD_ACCEPT}
+						multiple
+						onChange={handleFileUpload}
+						className='hidden'
+					/>
+					<input
+						ref={(element) => {
+							folderUploadInputRef.current = element
+							element?.setAttribute('webkitdirectory', '')
+						}}
+						type='file'
+						accept={UPLOAD_ACCEPT}
+						multiple
+						onChange={handleFileUpload}
+						className='hidden'
+					/>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={() => uploadInputRef.current?.click()}
+						disabled={uploadFilesMutation.isPending}
+						className='h-7 border-zinc-700 bg-zinc-800 px-2 text-xs text-zinc-300 hover:bg-zinc-700'
+					>
+						<Upload className='mr-1 h-3 w-3' />
+						Arquivos
+					</Button>
+					<Button
+						variant='outline'
+						size='sm'
+						onClick={() => folderUploadInputRef.current?.click()}
+						disabled={uploadFilesMutation.isPending}
+						className='h-7 border-zinc-700 bg-zinc-800 px-2 text-xs text-zinc-300 hover:bg-zinc-700'
+					>
+						<FolderUp className='mr-1 h-3 w-3' />
+						{uploadFilesMutation.isPending ? 'Enviando...' : 'Pasta'}
+					</Button>
+
 					<Button
 						variant='outline'
 						size='sm'
@@ -243,7 +380,16 @@ function WorkspacePage() {
 						<FileTree
 							files={project?.files || []}
 							activeFile={activeFile}
-							onSelectFile={setActiveFile}
+							onSelectFile={(path) => {
+								const file = project?.files?.find(
+									(item: { path: string }) => item.path === path,
+								)
+								if (file?.type === 'image') {
+									toast.info('A imagem está disponível para uso no documento.')
+									return
+								}
+								setActiveFile(path)
+							}}
 							onCreateFile={(name, path) =>
 								createFileMutation.mutate({ name, path })
 							}

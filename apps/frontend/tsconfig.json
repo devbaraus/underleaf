@@ -14,6 +14,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "noEmit": true,
+    "allowImportingTsExtensions": true,
 
     /* Linting */
     "skipLibCheck": true,
