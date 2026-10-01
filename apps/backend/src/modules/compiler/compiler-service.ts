@@ -1,7 +1,9 @@
-import { copyFileSync, mkdirSync, rmSync, writeFileSync, existsSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { prisma } from '@/lib/db'
 import { logging } from '@/shared/logger'
+import { copyProjectDirectory, writeProjectFile } from '@/modules/projects/project-storage'
+import { ProjectsService } from '@/modules/projects/projects-service'
 import { parseLatexErrors } from './error-parser'
 import { runTectonic } from './tectonic-runner'
 import type { CompileBody } from './compiler-schema'
@@ -10,16 +12,7 @@ export class CompilerService {
   static async compile(projectId: string, userId: string, payload?: CompileBody) {
     const startTime = Date.now()
 
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      include: { files: true },
-    })
-
-    if (!project) {
-      const error: any = new Error('Projeto não encontrado')
-      error.status = 404
-      throw error
-    }
+    const project = await ProjectsService.getById(projectId, userId)
 
     // Identifica o arquivo principal (default: main.tex)
     const mainFileRecord = project.files.find((f) => f.isMain) || project.files.find((f) => f.path === 'main.tex')
@@ -34,30 +27,26 @@ export class CompilerService {
     mkdirSync(pdfCacheDir, { recursive: true })
 
     try {
-      // 1. Materializa arquivos salvos no disco
-      const fileMap = new Map<string, string>()
-      for (const file of project.files) {
-        fileMap.set(file.path, file.content)
-      }
-
-      // 2. Sobrepõe arquivos não salvos enviados no payload
+      // 1. Persiste alterações pendentes diretamente na árvore física do projeto.
       if (payload?.unsavedFiles) {
         for (const unsaved of payload.unsavedFiles) {
-          fileMap.set(unsaved.path, unsaved.content)
-          // Atualiza também no banco de dados para sincronismo
-          await prisma.projectFile.updateMany({
-            where: { projectId, path: unsaved.path },
-            data: { content: unsaved.content, updatedAt: new Date() },
+          const file = project.files.find((item) => item.path === unsaved.path)
+          if (!file || file.type === 'image') continue
+
+          const sizeBytes = writeProjectFile(projectId, file.path, unsaved.content, file.type)
+          await prisma.projectFile.update({
+            where: { id: file.id, projectId },
+            data: { content: '', sizeBytes },
+          })
+          await prisma.project.update({
+            where: { id: projectId },
+            data: { storageBytes: { increment: sizeBytes - file.sizeBytes } },
           })
         }
       }
 
-      // 3. Escreve arquivos na pasta de build
-      for (const [filePath, content] of fileMap.entries()) {
-        const fullPath = resolve(buildDir, filePath)
-        mkdirSync(dirname(fullPath), { recursive: true })
-        writeFileSync(fullPath, content, 'utf-8')
-      }
+      // 2. Copia a árvore física para um workspace efêmero de compilação.
+      copyProjectDirectory(projectId, buildDir)
 
       // 4. Executa compilação Tectonic
       const runResult = await runTectonic(buildDir, mainFileName)

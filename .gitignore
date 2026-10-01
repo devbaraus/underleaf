@@ -12,10 +12,7 @@ build/
 routeTree.gen.ts
 
 # Storage & Temporary files
-storage/builds/*
-!storage/builds/.gitkeep
-storage/pdf_cache/*
-!storage/pdf_cache/.gitkeep
+storage/
 
 # Environment variables
 .env
