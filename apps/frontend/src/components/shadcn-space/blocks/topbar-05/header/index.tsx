@@ -31,7 +31,7 @@ export default function Header() {
 						orientation='vertical'
 						className='hidden h-4! sm:block self-center!' */}
 					{/* /> */}
-					<Button render={<Link to='/projects' />} variant='ghost'>
+					<Button render={<Link to='/projects' />} variant='ghost' nativeButton>
 						<span className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-black text-zinc-950'>
 							<LeafyGreenIcon className='h-4 w-4' />
 						</span>

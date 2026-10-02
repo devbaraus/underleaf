@@ -109,14 +109,10 @@ function ProjectsDashboardPage() {
 				</div>
 
 				<Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-					<DialogTrigger
-						render={
-							<Button className='bg-emerald-600 hover:bg-emerald-500 text-white'>
-								<Plus className='mr-2 h-4 w-4' />
-								Novo Projeto
-							</Button>
-						}
-					></DialogTrigger>
+					<DialogTrigger>
+						<Plus className='mr-2 h-4 w-4' />
+						Novo Projeto
+					</DialogTrigger>
 					<DialogContent className='border-zinc-800 bg-zinc-900 text-zinc-100'>
 						<DialogHeader>
 							<DialogTitle>Criar Novo Projeto LaTeX</DialogTitle>

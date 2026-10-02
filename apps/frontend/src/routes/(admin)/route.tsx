@@ -64,6 +64,7 @@ function AdminLayout() {
 				<div>
 					<Button
 						render={<Link to='/projects' />}
+						nativeButton
 						variant='ghost'
 						size='sm'
 						className='w-full justify-start text-xs text-zinc-400 hover:text-zinc-200'

@@ -288,6 +288,7 @@ export function ReactPdfViewer({
 						variant='outline'
 						size='sm'
 						className='h-7 border-zinc-700 bg-zinc-800 text-xs text-zinc-200 hover:bg-zinc-700'
+						nativeButton
 					>
 						<Download className='mr-1.5 h-3 w-3' />
 						Download

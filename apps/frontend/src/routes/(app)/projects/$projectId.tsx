@@ -276,6 +276,7 @@ function WorkspacePage() {
 				<div className='flex items-center space-x-3'>
 					<Button
 						render={<Link to='/projects' />}
+						nativeButton
 						variant='ghost'
 						size='sm'
 						className='h-7 px-2 text-xs text-zinc-400 hover:text-zinc-200'
