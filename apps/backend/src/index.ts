@@ -14,6 +14,7 @@ import { ErrorMacro } from './macros/error-macro'
 import { AdminController } from './modules/admin/admin-controller'
 import { CompilerController } from './modules/compiler/compiler-controller'
 import { ProjectsController } from './modules/projects/projects-controller'
+import { CollaborationController } from './modules/collaboration/collaboration-controller'
 import { UserController } from './modules/user/user-controller'
 import { logging } from './shared/logger'
 
@@ -83,6 +84,7 @@ export const app = new Elysia()
   .use(UserController)
   .use(ProjectsController)
   .use(CompilerController)
+  .use(CollaborationController)
   .use(AdminController)
   .ws('/ws', {
     auth: true,

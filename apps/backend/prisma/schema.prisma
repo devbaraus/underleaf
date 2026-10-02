@@ -56,9 +56,10 @@ model User {
 
   sessions      Session[]
   accounts      Account[]
-  projects      Project[] @relation("UserProjects")
+  projects      Project[] @relation("ProjectOwner")
   compileLogs   CompileLog[]
   auditLogs     AuditLog[]
+  colaborations ProjectColaborator[] @relation("ProjectColaborator")
 
   @@map("user")
 }
@@ -129,12 +130,30 @@ model Project {
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
-  owner            User          @relation("UserProjects", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner            User          @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   files            ProjectFile[]
   compileLogs      CompileLog[]
+  collaborators     ProjectColaborator[] @relation("ProjectColaborator")
 
   @@index([ownerId])
   @@map("project")
+}
+
+model ProjectColaborator {
+  id        String   @id @default(uuid()) @map("id")
+  projectId String   @map("project_id")
+  userId    String   @map("user_id")
+  role      String   @default("collaborator") @map("role") // "collaborator" | "viewer" | "editor"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project   Project  @relation("ProjectColaborator", fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation("ProjectColaborator",fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@map("project_colaborator")
 }
 
 model ProjectFile {
@@ -143,6 +162,7 @@ model ProjectFile {
   name      String   @map("name")
   path      String   @map("path") // ex: "main.tex", "references.bib", "figures/chart.png"
   content   String   @map("content") // texto utf-8 ou base64
+  yjsState  Bytes?   @map("yjs_state") // snapshot CRDT; presença permanece efêmera
   isMain    Boolean  @default(false) @map("is_main")
   type      String   @default("tex") @map("type") // "tex" | "bib" | "cls" | "sty" | "image"
   sizeBytes Int      @default(0) @map("size_bytes")
