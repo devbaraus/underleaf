@@ -7,6 +7,12 @@ import { defineConfig } from 'vite'
 
 const config = defineConfig({
 	plugins: [devtools(), nitro(), tailwindcss(), tanstackStart(), viteReact()],
+	resolve: {
+		alias: {
+			// y-monaco uses the legacy deep import; Monaco 0.57 exports public subpaths.
+			'monaco-editor/esm/vs/editor/editor.api.js': 'monaco-editor/editor/editor.api',
+		},
+	},
 	server: {
 		port: 3000,
 	},
@@ -19,7 +25,10 @@ const config = defineConfig({
 			'pdfjs-dist',
 			'@monaco-editor/react',
 			'monaco-editor/editor/editor.api',
+			'monaco-editor/editor/contrib/suggest/browser/suggestController',
+			'monaco-editor/features/snippet/register',
 			'monaco-latex',
+			'y-monaco',
 		],
 	},
 })

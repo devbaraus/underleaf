@@ -139,3 +139,6 @@ body {
     @apply font-sans;
   }
 }
+/* Remote Monaco selections supplied by y-monaco awareness. */
+.yRemoteSelection { background-color: #34d39944; }
+.yRemoteSelectionHead { position: absolute; border-left: 2px solid #34d399; height: 100%; }
