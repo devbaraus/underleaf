@@ -34,7 +34,7 @@ services:
       MENDELEY_CLIENT_SECRET: ${MENDELEY_CLIENT_SECRET:-}
       MENDELEY_REDIRECT_URI: ${MENDELEY_REDIRECT_URI:-}
     volumes:
-      - ./storage:/app/apps/backend/storage
+      - ${STORAGE_PATH:-./storage}:/app/apps/backend/storage
     depends_on:
       postgres:
         condition: service_healthy
