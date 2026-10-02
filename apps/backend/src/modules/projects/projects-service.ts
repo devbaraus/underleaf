@@ -62,7 +62,10 @@ e^{i\\pi} + 1 = 0
 \\end{equation}
 
 \\section{Conclusão}
-O fluxo de trabalho unificado com visualizador PDF em tempo real acelera a produtividade acadêmica.
+O fluxo de trabalho unificado com visualizador PDF em tempo real acelera a produtividade acadêmica \\cite{underleaf2026}.
+
+\\bibliographystyle{alpha} % Sets the bibliography style (e.g., plain, unsrt, alpha)
+\\bibliography{references} % Points to references.bib (do not include the .bib extension)
 
 \\end{document}
 `,
