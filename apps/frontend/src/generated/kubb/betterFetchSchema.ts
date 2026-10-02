@@ -1,6 +1,4 @@
-import { createSchema } from '@better-fetch/fetch'
 import * as z from 'zod'
-
 import {
 	adminListUserSessionsBodySchema,
 	adminListUserSessionsResponseSchema,
@@ -22,6 +20,10 @@ import {
 	createUserBodySchema,
 	createUserResponseSchema,
 } from './zod/createUserSchema'
+import {
+	deleteApiProjectsByIdCollaboratorsByUserIdPathIdSchema,
+	deleteApiProjectsByIdCollaboratorsByUserIdPathUserIdSchema,
+} from './zod/deleteApiProjectsByIdCollaboratorsByUserIdSchema'
 import {
 	deleteApiProjectsByIdFilesByFileIdPathFileIdSchema,
 	deleteApiProjectsByIdFilesByFileIdPathIdSchema,
@@ -48,9 +50,16 @@ import {
 	getApiAuthVerifyEmailQueryTokenSchema,
 	getApiAuthVerifyEmailResponseSchema,
 } from './zod/getApiAuthVerifyEmailSchema'
+import { getApiProjectsByIdCollaboratorsPathIdSchema } from './zod/getApiProjectsByIdCollaboratorsSchema'
 import { getApiProjectsByIdLogsPathIdSchema } from './zod/getApiProjectsByIdLogsSchema'
 import { getApiProjectsByIdPdfPathIdSchema } from './zod/getApiProjectsByIdPdfSchema'
 import { getApiProjectsByIdPathIdSchema } from './zod/getApiProjectsByIdSchema'
+import {
+	getApiReferencesMendeleyCallbackQueryCodeSchema,
+	getApiReferencesMendeleyCallbackQueryErrorDescriptionSchema,
+	getApiReferencesMendeleyCallbackQueryErrorSchema,
+	getApiReferencesMendeleyCallbackQueryStateSchema,
+} from './zod/getApiReferencesMendeleyCallbackSchema'
 import {
 	getSessionPostBodySchema,
 	getSessionPostResponseSchema,
@@ -123,6 +132,9 @@ import {
 } from './zod/postApiAuthUnlinkAccountSchema'
 import { postApiProjectsByIdCompilePathIdSchema } from './zod/postApiProjectsByIdCompileSchema'
 import { postApiProjectsByIdFilesPathIdSchema } from './zod/postApiProjectsByIdFilesSchema'
+import { postApiReferencesByProjectIdMendeleyImportPathProjectIdSchema } from './zod/postApiReferencesByProjectIdMendeleyImportSchema'
+import { postApiReferencesByProjectIdZoteroImportPathProjectIdSchema } from './zod/postApiReferencesByProjectIdZoteroImportSchema'
+import { putApiProjectsByIdCollaboratorsPathIdSchema } from './zod/putApiProjectsByIdCollaboratorsSchema'
 import {
 	putApiProjectsByIdFilesByFileIdPathFileIdSchema,
 	putApiProjectsByIdFilesByFileIdPathIdSchema,
@@ -193,6 +205,7 @@ import {
 	verifyPasswordBodySchema,
 	verifyPasswordResponseSchema,
 } from './zod/verifyPasswordSchema'
+import { createSchema } from '@better-fetch/fetch'
 
 export const betterFetchSchema = createSchema(
 	{
@@ -223,6 +236,18 @@ export const betterFetchSchema = createSchema(
 				fileId: deleteApiProjectsByIdFilesByFileIdPathFileIdSchema,
 			}),
 		},
+		'@get/projects/:id/collaborators': {
+			params: z.object({ id: getApiProjectsByIdCollaboratorsPathIdSchema }),
+		},
+		'@put/projects/:id/collaborators': {
+			params: z.object({ id: putApiProjectsByIdCollaboratorsPathIdSchema }),
+		},
+		'@delete/projects/:id/collaborators/:userId': {
+			params: z.object({
+				id: deleteApiProjectsByIdCollaboratorsByUserIdPathIdSchema,
+				userId: deleteApiProjectsByIdCollaboratorsByUserIdPathUserIdSchema,
+			}),
+		},
 		'@post/projects/:id/compile': {
 			params: z.object({ id: postApiProjectsByIdCompilePathIdSchema }),
 		},
@@ -245,6 +270,29 @@ export const betterFetchSchema = createSchema(
 		'@get/admin/projects': {},
 		'@get/admin/telemetry': {},
 		'@get/admin/audit': {},
+		'@get/references/mendeley/status': {},
+		'@post/references/mendeley/connect': {},
+		'@get/references/mendeley/callback': {
+			query: z.object({
+				state: getApiReferencesMendeleyCallbackQueryStateSchema.optional(),
+				code: getApiReferencesMendeleyCallbackQueryCodeSchema.optional(),
+				error: getApiReferencesMendeleyCallbackQueryErrorSchema.optional(),
+				error_description:
+					getApiReferencesMendeleyCallbackQueryErrorDescriptionSchema.optional(),
+			}),
+		},
+		'@delete/references/mendeley': {},
+		'@post/references/:projectId/zotero/import': {
+			params: z.object({
+				projectId: postApiReferencesByProjectIdZoteroImportPathProjectIdSchema,
+			}),
+		},
+		'@post/references/:projectId/mendeley/import': {
+			params: z.object({
+				projectId:
+					postApiReferencesByProjectIdMendeleyImportPathProjectIdSchema,
+			}),
+		},
 		'@post/auth/sign-in/social': {
 			input: socialSignInBodySchema,
 			output: socialSignInResponseSchema,

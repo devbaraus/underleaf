@@ -360,7 +360,7 @@ function WorkspacePage() {
 						{uploadFilesMutation.isPending ? 'Enviando...' : 'Pasta'}
 					</Button>
 
-					{project?.canWrite && <ReferenceImport projectId={projectId} />}
+					{/* {project?.canWrite && <ReferenceImport projectId={projectId} />} */}
 					{project?.role === 'owner' && <ProjectSharing projectId={projectId} />}
 
 					<Button
