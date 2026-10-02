@@ -27,8 +27,31 @@ interface MonacoLatexEditorProps {
 	onCompile: () => void
 	onFlushReady: (flush: (() => Promise<void>) | null) => void
 	onPdfStatus?: (status: 'compiling' | 'compiled' | 'error', compilerUserId?: string) => void
+	currentUser?: { id?: string; name?: string; email?: string } | null
 	errors?: CompileError[]
 	citations?: CitationEntry[]
+}
+
+const PEER_COLORS = [
+	'#3b82f6', // blue
+	'#10b981', // emerald
+	'#f59e0b', // amber
+	'#ec4899', // pink
+	'#8b5cf6', // purple
+	'#06b6d4', // cyan
+	'#f97316', // orange
+	'#14b8a6', // teal
+	'#e11d48', // rose
+	'#84cc16', // lime
+]
+
+export function getPeerColor(idOrName: string): string {
+	let hash = 0
+	for (let i = 0; i < idOrName.length; i++) {
+		hash = (hash << 5) - hash + idOrName.charCodeAt(i)
+		hash |= 0
+	}
+	return PEER_COLORS[Math.abs(hash) % PEER_COLORS.length]
 }
 
 // Usa o monaco-editor instalado em vez da cópia do CDN (0.55.1) que o @monaco-editor/react
@@ -64,6 +87,7 @@ const EDITOR_OPTIONS = {
 	scrollBeyondLastLine: false,
 	automaticLayout: true,
 	wordWrap: 'on',
+	padding: { top: 8, bottom: 8 },
 	suggestOnTriggerCharacters: true,
 	quickSuggestions: { other: true, comments: false, strings: true },
 	snippetSuggestions: 'top',
@@ -92,6 +116,7 @@ export function MonacoLatexEditor({
 	onCompile,
 	onFlushReady,
 	onPdfStatus,
+	currentUser,
 	errors = [],
 	citations = [],
 }: MonacoLatexEditorProps) {
@@ -100,6 +125,8 @@ export function MonacoLatexEditor({
 	const undoRef = useRef<Y.UndoManager | null>(null)
 	const citationsRef = useRef(citations)
 	citationsRef.current = citations
+	const currentUserRef = useRef(currentUser)
+	currentUserRef.current = currentUser
 	const [canEdit, setCanEdit] = useState(false)
 	const [history, setHistory] = useState({ undo: false, redo: false })
 	const [mounted, setMounted] = useState(false)
@@ -204,6 +231,78 @@ export function MonacoLatexEditor({
 				new Set([editor]),
 				provider.awareness,
 			)
+
+			// Registra o usuário local no protocolo de awareness do Yjs
+			const currentU = currentUserRef.current
+			const localColor = currentU?.id
+				? getPeerColor(currentU.id)
+				: getPeerColor(String(doc.clientID))
+
+			provider.awareness.setLocalStateField('user', {
+				id: currentU?.id,
+				name: currentU?.name || currentU?.email?.split('@')[0] || 'Colaborador',
+				color: localColor,
+			})
+
+			// Elemento de estilo dinâmico para renderizar cores e nomes nos cursores dos peers
+			const styleEl = document.createElement('style')
+			styleEl.setAttribute('type', 'text/css')
+			styleEl.setAttribute('data-yjs-monaco-cursors', fileId)
+			document.head.appendChild(styleEl)
+
+			const updatePeerStyles = () => {
+				let css = `
+.yRemoteSelection {
+	opacity: 0.35;
+	transition: background-color 0.15s ease;
+}
+.yRemoteSelectionHead {
+	position: absolute;
+	box-sizing: border-box;
+	height: 100%;
+	border-left: 2px solid #3b82f6;
+}
+`
+				provider.awareness.getStates().forEach((state: any, clientID: number) => {
+					if (clientID === doc.clientID) return
+					const peerUser = state?.user
+					const color = peerUser?.color || getPeerColor(String(clientID))
+					const rawName = peerUser?.name || 'Colaborador'
+					const safeName = rawName.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+
+					css += `
+.yRemoteSelection-${clientID} {
+	background-color: ${color}40 !important;
+}
+.yRemoteSelectionHead-${clientID} {
+	border-left: 2px solid ${color} !important;
+}
+.yRemoteSelectionHead-${clientID}::after {
+	content: "${safeName}";
+	position: absolute;
+	top: -1.35em;
+	left: -2px;
+	font-size: 10px;
+	line-height: 1.2;
+	font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	font-weight: 600;
+	background-color: ${color};
+	color: #ffffff;
+	padding: 1px 4px;
+	border-radius: 3px 3px 3px 0;
+	white-space: nowrap;
+	pointer-events: none;
+	user-select: none;
+	z-index: 100;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+`
+				})
+				styleEl.textContent = css
+			}
+
+			provider.awareness.on('change', updatePeerStyles)
+			updatePeerStyles()
 			const undo = new Y.UndoManager(doc.getText('content'), { trackedOrigins: new Set([binding]) })
 			undoRef.current = undo
 			const updateHistory = () => setHistory({ undo: undo.canUndo(), redo: undo.canRedo() })
@@ -237,6 +336,8 @@ export function MonacoLatexEditor({
 				undo.off('stack-item-added', updateHistory)
 				undo.off('stack-item-popped', updateHistory)
 				undo.off('stack-cleared', updateHistory)
+				provider.awareness.off('change', updatePeerStyles)
+				styleEl.remove()
 				callbacks.current.onFlushReady(null)
 				for (const pending of barriers.values()) {
 					clearTimeout(pending.timer)

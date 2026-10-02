@@ -414,6 +414,7 @@ function WorkspacePage() {
 									projectId={projectId}
 									fileId={project?.files?.find((f: any) => f.path === activeFile)?.id || ''}
 									readOnly={!project?.canWrite}
+									currentUser={user}
 									onStatus={(status) => {
 										setConnectionStatus(status)
 										if (status === 'disconnected')
