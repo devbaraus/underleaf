@@ -9,7 +9,9 @@ import { Button } from '#/components/ui/button'
 import { CompileDrawer } from '#/components/workspace/compile-drawer'
 import { FileTree } from '#/components/workspace/file-tree'
 import { MonacoLatexEditor } from '#/components/workspace/monaco-editor'
+import { useBibliography } from '#/hooks/use-bibliography'
 import { PdfPreviewer } from '#/components/workspace/pdf-previewer'
+import { ReferenceImport } from '#/components/workspace/reference-import'
 import { ProjectSharing } from '#/components/workspace/project-sharing'
 import { appConfig } from '#/config'
 
@@ -66,6 +68,8 @@ function WorkspacePage() {
 			return res.json()
 		},
 	})
+
+	const citations = useBibliography(projectId, project?.files || [])
 
 	// 3. Cria novo arquivo
 	const createFileMutation = useMutation({
@@ -284,6 +288,7 @@ function WorkspacePage() {
 						{uploadFilesMutation.isPending ? 'Enviando...' : 'Pasta'}
 					</Button>
 
+					{project?.canWrite && <ReferenceImport projectId={projectId} />}
 					{project?.role === 'owner' && <ProjectSharing projectId={projectId} />}
 
 					<Button
@@ -348,6 +353,7 @@ function WorkspacePage() {
 									fileName={activeFile}
 									onCompile={handleCompile}
 									errors={compileErrors}
+									citations={citations}
 								/>
 							</div>
 

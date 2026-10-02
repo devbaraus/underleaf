@@ -15,6 +15,7 @@ import { AdminController } from './modules/admin/admin-controller'
 import { CompilerController } from './modules/compiler/compiler-controller'
 import { ProjectsController } from './modules/projects/projects-controller'
 import { CollaborationController } from './modules/collaboration/collaboration-controller'
+import { ReferencesController } from './modules/references/references-controller'
 import { UserController } from './modules/user/user-controller'
 import { logging } from './shared/logger'
 
@@ -26,12 +27,7 @@ export const app = new Elysia()
       origin: env.CORS_ORIGIN,
       methods: env.CORS_METHODS as any,
       credentials: true,
-      allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'X-Correlation-Id',
-        'authorization',
-      ],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Correlation-Id', 'authorization'],
       exposeHeaders: ['set-auth-token'],
     }),
   )
@@ -59,7 +55,10 @@ export const app = new Elysia()
         tags: [
           { name: 'Auth', description: 'Autenticação, sessões e tokens via Better Auth' },
           { name: 'Projects', description: 'Gerenciamento de projetos e arquivos LaTeX' },
-          { name: 'Compiler', description: 'Compilação sob demanda com Tectonic Engine e stream de PDF' },
+          {
+            name: 'Compiler',
+            description: 'Compilação sob demanda com Tectonic Engine e stream de PDF',
+          },
           { name: 'Admin', description: 'Governança, controle de cotas e telemetria' },
           { name: 'User', description: 'Perfil e consumo de cota do usuário' },
         ],
@@ -86,6 +85,7 @@ export const app = new Elysia()
   .use(CompilerController)
   .use(CollaborationController)
   .use(AdminController)
+  .use(ReferencesController)
   .ws('/ws', {
     auth: true,
     open(ws) {
@@ -98,4 +98,6 @@ export const app = new Elysia()
   .listen(env.PORT)
 
 logging.info(`🚀 Underleaf API rodando em http://${app.server?.hostname}:${app.server?.port}`)
-logging.info(`📖 OpenAPI Docs disponível em http://${app.server?.hostname}:${app.server?.port}/openapi`)
+logging.info(
+  `📖 OpenAPI Docs disponível em http://${app.server?.hostname}:${app.server?.port}/openapi`,
+)

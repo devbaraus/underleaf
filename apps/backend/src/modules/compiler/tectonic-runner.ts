@@ -31,7 +31,7 @@ function resolveTectonicBinary(): string {
 export async function runTectonic(
   buildDir: string,
   mainFile = 'main.tex',
-  timeoutMs = 60000,
+  timeoutMs = env.TECTONIC_TIMEOUT_MS,
 ): Promise<TectonicRunResult> {
   const binary = resolveTectonicBinary()
   const mainFilePath = resolve(buildDir, mainFile)
@@ -44,14 +44,9 @@ export async function runTectonic(
     }
   }
 
-  const args = [
-    binary,
-    '--keep-logs',
-    '--outdir',
-    buildDir,
-    mainFilePath,
-  ]
+  const args = [binary, '--keep-logs', '--outdir', buildDir, mainFilePath]
 
+  let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     const proc = Bun.spawn(args, {
       cwd: buildDir,
@@ -62,13 +57,14 @@ export async function runTectonic(
       },
     })
 
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => {
-        try {
-          proc.kill()
-        } catch {}
-        reject(new Error(`Tempo limite de compilação excedido (${timeoutMs / 1000}s)`))
-      }, timeoutMs),
+    const timeoutPromise = new Promise<never>(
+      (_, reject) =>
+        (timeout = setTimeout(() => {
+          try {
+            proc.kill()
+          } catch {}
+          reject(new Error(`Tempo limite de compilação excedido (${timeoutMs / 1000}s)`))
+        }, timeoutMs)),
     )
 
     const executionPromise = (async () => {
@@ -98,5 +94,7 @@ export async function runTectonic(
       exitCode: -1,
       output: error.message || 'Erro desconhecido na execução do compilador',
     }
+  } finally {
+    if (timeout) clearTimeout(timeout)
   }
 }

@@ -1,9 +1,11 @@
+import { createClientOnlyFn } from '@tanstack/react-start'
 import Editor, { type BeforeMount, loader, type OnMount } from '@monaco-editor/react'
 import { appConfig } from '#/config'
+import { citationContext, type CitationEntry } from '#/lib/latex/bibliography'
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
 import { Bold, Italic, List, Redo2, Undo2 } from 'lucide-react'
-import type { editor as MonacoEditor } from 'monaco-editor'
+import type { editor as MonacoEditor, Position as MonacoPosition } from 'monaco-editor'
 import * as Y from 'yjs'
 import { WebsocketProvider } from 'y-websocket'
 import { registerLaTeXLanguage } from 'monaco-latex'
@@ -25,13 +27,14 @@ interface MonacoLatexEditorProps {
 	onCompile: () => void
 	onFlushReady: (flush: (() => Promise<void>) | null) => void
 	errors?: CompileError[]
+	citations?: CitationEntry[]
 }
 
 // Usa o monaco-editor instalado em vez da cópia do CDN (0.55.1) que o @monaco-editor/react
 // carrega por padrão, assim editor, monaco-latex e tipos compartilham a mesma versão.
 // Só no cliente: o monaco acessa `window`.
 let monacoSetup: Promise<void> | undefined
-function setupLocalMonaco() {
+const setupLocalMonaco = createClientOnlyFn(() => {
 	monacoSetup ??= (async () => {
 		const [monaco, { default: EditorWorker }] = await Promise.all([
 			import('monaco-editor/editor/editor.api'),
@@ -47,7 +50,10 @@ function setupLocalMonaco() {
 		loader.config({ monaco })
 	})()
 	return monacoSetup
-}
+})
+
+// Keep Nitro from merging the browser-only binding into its server-side Yjs chunk.
+const loadMonacoBinding = createClientOnlyFn(() => import('y-monaco'))
 
 const EDITOR_OPTIONS = {
 	readOnly: true,
@@ -85,10 +91,13 @@ export function MonacoLatexEditor({
 	onCompile,
 	onFlushReady,
 	errors = [],
+	citations = [],
 }: MonacoLatexEditorProps) {
 	const editorRef = useRef<MonacoEditor.IStandaloneCodeEditor | null>(null)
 	const monacoRef = useRef<Parameters<BeforeMount>[0] | null>(null)
 	const undoRef = useRef<Y.UndoManager | null>(null)
+	const citationsRef = useRef(citations)
+	citationsRef.current = citations
 	const [canEdit, setCanEdit] = useState(false)
 	const [history, setHistory] = useState({ undo: false, redo: false })
 	const [mounted, setMounted] = useState(false)
@@ -137,7 +146,7 @@ export function MonacoLatexEditor({
 		callbacks.current.onStatus('connecting')
 		editor.updateOptions({ readOnly: true })
 		// y-monaco imports Monaco; load after browser-only Monaco setup.
-		import('y-monaco').then(({ MonacoBinding }) => {
+		loadMonacoBinding().then(({ MonacoBinding }) => {
 			if (disposed) return
 			const doc = new Y.Doc()
 			const url = new URL(appConfig.apiUrl, window.location.origin)
@@ -238,6 +247,54 @@ export function MonacoLatexEditor({
 			cleanup?.()
 		}
 	}, [mounted, projectId, fileId, readOnly])
+
+	useEffect(() => {
+		if (!mounted || !monacoRef.current) return
+		const monaco = monacoRef.current
+		const provider = monaco.languages.registerCompletionItemProvider('latex', {
+			triggerCharacters: ['{', ','],
+			provideCompletionItems(model: MonacoEditor.ITextModel, position: MonacoPosition) {
+				// Keep suggestions scoped to this project's editor, even with multiple models.
+				if (model !== editorRef.current?.getModel()) return { suggestions: [] }
+				const context = citationContext(
+					model.getValueInRange({
+						startLineNumber: 1,
+						startColumn: 1,
+						endLineNumber: position.lineNumber,
+						endColumn: position.column,
+					}),
+				)
+				if (!context) return { suggestions: [] }
+				const suffix =
+					/^[^\s,{}]*/.exec(
+						model.getLineContent(position.lineNumber).slice(position.column - 1),
+					)?.[0] || ''
+				const range = {
+					startLineNumber: position.lineNumber,
+					startColumn: position.column - context.key.length,
+					endLineNumber: position.lineNumber,
+					endColumn: position.column + suffix.length,
+				}
+				return {
+					incomplete: true,
+					suggestions: citationsRef.current
+						.filter((entry) => !context.usedKeys.has(entry.key))
+						.map((entry) => ({
+							label: { label: entry.key, description: entry.title || entry.file },
+							kind: monaco.languages.CompletionItemKind.Reference,
+							insertText: entry.key,
+							filterText: entry.key,
+							detail: [entry.author, entry.year, entry.file].filter(Boolean).join(' · '),
+							documentation: [entry.title, entry.author, entry.year, entry.file]
+								.filter(Boolean)
+								.join('\n\n'),
+							range,
+						})),
+				}
+			},
+		})
+		return () => provider.dispose()
+	}, [mounted])
 
 	// Atualiza marcadores de erro no editor
 	useEffect(() => {
