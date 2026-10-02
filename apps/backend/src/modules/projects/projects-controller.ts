@@ -94,3 +94,35 @@ export const ProjectsController = new Elysia({ name: 'projects-controller', tags
       params: t.Object({ id: t.String(), fileId: t.String() }),
     },
   )
+
+  .get(
+    '/api/projects/:id/collaborators',
+    ({ params, user }) => ProjectsService.collaborators(params.id, user.id),
+    {
+      auth: true,
+      params: t.Object({ id: t.String() }),
+    },
+  )
+  .put(
+    '/api/projects/:id/collaborators',
+    ({ params, user, body }) => ProjectsService.share(params.id, user.id, body.email, body.role),
+    {
+      auth: true,
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        email: t.String({ format: 'email' }),
+        role: t.Union([t.Literal('editor'), t.Literal('viewer')]),
+      }),
+    },
+  )
+  .delete(
+    '/api/projects/:id/collaborators/:userId',
+    async ({ params, user }) => {
+      await ProjectsService.unshare(params.id, user.id, params.userId)
+      return { success: true }
+    },
+    {
+      auth: true,
+      params: t.Object({ id: t.String(), userId: t.String() }),
+    },
+  )

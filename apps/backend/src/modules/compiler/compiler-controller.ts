@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { BetterAuthMacro } from '@/macros/better-auth-macro'
 import { compileBodySchema } from './compiler-schema'
+import { assertProjectAccess } from '../projects/project-access'
 import { CompilerService } from './compiler-service'
 
 export const CompilerController = new Elysia({ name: 'compiler-controller', tags: ['Compiler'] })
@@ -24,13 +25,15 @@ export const CompilerController = new Elysia({ name: 'compiler-controller', tags
   )
   .get(
     '/api/projects/:id/pdf',
-    async ({ params: { id }, set }) => {
+    async ({ params: { id }, set, user }) => {
+      await assertProjectAccess(id, user.id)
       const file = await CompilerService.getPdf(id)
       set.headers['Content-Type'] = 'application/pdf'
       set.headers['Content-Disposition'] = `inline; filename="${id}.pdf"`
       return file
     },
     {
+      auth: true,
       params: t.Object({
         id: t.String(),
       }),
@@ -38,7 +41,8 @@ export const CompilerController = new Elysia({ name: 'compiler-controller', tags
   )
   .get(
     '/api/projects/:id/logs',
-    async ({ params: { id } }) => {
+    async ({ params: { id }, user }) => {
+      await assertProjectAccess(id, user.id)
       return CompilerService.getLogs(id)
     },
     {

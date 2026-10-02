@@ -2,7 +2,8 @@ import { copyFileSync, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { prisma } from '@/lib/db'
 import { logging } from '@/shared/logger'
-import { copyProjectDirectory, writeProjectFile } from '@/modules/projects/project-storage'
+import { copyProjectDirectory } from '@/modules/projects/project-storage'
+import { assertProjectAccess } from '../projects/project-access'
 import { ProjectsService } from '@/modules/projects/projects-service'
 import { parseLatexErrors } from './error-parser'
 import { runTectonic } from './tectonic-runner'
@@ -10,12 +11,14 @@ import type { CompileBody } from './compiler-schema'
 
 export class CompilerService {
   static async compile(projectId: string, userId: string, payload?: CompileBody) {
+    await assertProjectAccess(projectId, userId, 'write')
     const startTime = Date.now()
 
     const project = await ProjectsService.getById(projectId, userId)
 
     // Identifica o arquivo principal (default: main.tex)
-    const mainFileRecord = project.files.find((f) => f.isMain) || project.files.find((f) => f.path === 'main.tex')
+    const mainFileRecord =
+      project.files.find((f) => f.isMain) || project.files.find((f) => f.path === 'main.tex')
     const mainFileName = mainFileRecord ? mainFileRecord.path : 'main.tex'
 
     // Prepara diretório efêmero de build
@@ -33,15 +36,7 @@ export class CompilerService {
           const file = project.files.find((item) => item.path === unsaved.path)
           if (!file || file.type === 'image') continue
 
-          const sizeBytes = writeProjectFile(projectId, file.path, unsaved.content, file.type)
-          await prisma.projectFile.update({
-            where: { id: file.id, projectId },
-            data: { content: '', sizeBytes },
-          })
-          await prisma.project.update({
-            where: { id: projectId },
-            data: { storageBytes: { increment: sizeBytes - file.sizeBytes } },
-          })
+          await ProjectsService.updateFile(projectId, file.id, userId, { content: unsaved.content })
         }
       }
 

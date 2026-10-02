@@ -1,6 +1,14 @@
 import { basename } from 'node:path'
+import * as Y from 'yjs'
+import { assertProjectAccess, projectAccessWhere } from './project-access'
+import { CollaborationService } from '../collaboration/collaboration-service'
 import { prisma } from '@/lib/db'
-import type { CreateFileInput, CreateProjectInput, UpdateFileInput, UpdateProjectInput } from './projects-schema'
+import type {
+  CreateFileInput,
+  CreateProjectInput,
+  UpdateFileInput,
+  UpdateProjectInput,
+} from './projects-schema'
 import {
   ensureProjectFile,
   normalizeProjectPath,
@@ -10,7 +18,10 @@ import {
   writeProjectFile,
 } from './project-storage'
 
-const DEFAULT_TEMPLATES: Record<string, { files: { name: string; path: string; content: string; isMain: boolean; type: string }[] }> = {
+const DEFAULT_TEMPLATES: Record<
+  string,
+  { files: { name: string; path: string; content: string; isMain: boolean; type: string }[] }
+> = {
   'academic-paper': {
     files: [
       {
@@ -121,21 +132,38 @@ Documento em branco iniciado no Underleaf.
 }
 
 export class ProjectsService {
-  private static async assertAccess(projectId: string, userId: string) {
-    const project = await prisma.project.findFirst({
-      where: { id: projectId, ownerId: userId },
+  static async collaborators(projectId: string, userId: string) {
+    await assertProjectAccess(projectId, userId)
+    return prisma.projectColaborator.findMany({
+      where: { projectId },
+      include: { user: { select: { id: true, name: true, email: true } } },
     })
-    if (!project) {
-      const error: any = new Error('Projeto não encontrado')
-      error.status = 404
-      throw error
-    }
-    return project
+  }
+
+  static async share(projectId: string, userId: string, email: string, role: 'editor' | 'viewer') {
+    const { project } = await assertProjectAccess(projectId, userId, 'owner')
+    const target = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } })
+    if (!target) throw Object.assign(new Error('Usuário não encontrado'), { status: 404 })
+    if (target.id === project.ownerId)
+      throw Object.assign(new Error('O proprietário já tem acesso'), { status: 400 })
+    const collaborator = await prisma.projectColaborator.upsert({
+      where: { projectId_userId: { projectId, userId: target.id } },
+      create: { projectId, userId: target.id, role },
+      update: { role },
+    })
+    await CollaborationService.disconnectUser(projectId, target.id)
+    return collaborator
+  }
+
+  static async unshare(projectId: string, userId: string, collaboratorId: string) {
+    await assertProjectAccess(projectId, userId, 'owner')
+    await prisma.projectColaborator.deleteMany({ where: { projectId, userId: collaboratorId } })
+    await CollaborationService.disconnectUser(projectId, collaboratorId)
   }
 
   static async list(userId: string) {
     return prisma.project.findMany({
-      where: { ownerId: userId },
+      where: projectAccessWhere(userId),
       orderBy: { updatedAt: 'desc' },
       include: {
         _count: {
@@ -146,10 +174,12 @@ export class ProjectsService {
   }
 
   static async getById(projectId: string, userId: string) {
+    const access = await assertProjectAccess(projectId, userId)
+    await CollaborationService.flushProject(projectId)
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,
-        ownerId: userId,
+        ...projectAccessWhere(userId),
       },
       include: {
         files: {
@@ -167,6 +197,14 @@ export class ProjectsService {
     // Migração transparente: projetos antigos são materializados no primeiro acesso.
     for (const file of project.files) {
       ensureProjectFile(projectId, file)
+      if (file.yjsState) {
+        const doc = new Y.Doc()
+        Y.applyUpdate(doc, file.yjsState)
+        const content =
+          (await CollaborationService.content(file.id)) ?? doc.getText('content').toString()
+        writeProjectFile(projectId, file.path, content, file.type)
+        doc.destroy()
+      }
     }
     if (project.files.some((file) => file.content !== '')) {
       await prisma.projectFile.updateMany({
@@ -177,7 +215,9 @@ export class ProjectsService {
 
     return {
       ...project,
-      files: project.files.map((file) => ({
+      role: access.role,
+      canWrite: access.canWrite,
+      files: project.files.map(({ yjsState, ...file }) => ({
         ...file,
         content: readProjectFile(projectId, file.path, file.type),
       })),
@@ -234,6 +274,7 @@ export class ProjectsService {
   }
 
   static async update(projectId: string, userId: string, input: UpdateProjectInput) {
+    await assertProjectAccess(projectId, userId, 'owner')
     return prisma.project.update({
       where: { id: projectId, ownerId: userId },
       data: {
@@ -244,7 +285,9 @@ export class ProjectsService {
   }
 
   static async delete(projectId: string, userId: string) {
-    await this.assertAccess(projectId, userId)
+    await assertProjectAccess(projectId, userId, 'owner')
+    const files = await prisma.projectFile.findMany({ where: { projectId } })
+    for (const file of files) await CollaborationService.closeFile(file.id)
     const project = await prisma.project.delete({
       where: { id: projectId, ownerId: userId },
     })
@@ -253,7 +296,7 @@ export class ProjectsService {
   }
 
   static async createFile(projectId: string, userId: string, input: CreateFileInput) {
-    await this.assertAccess(projectId, userId)
+    await assertProjectAccess(projectId, userId, 'write')
     const path = normalizeProjectPath(input.path)
     const existingFile = await prisma.projectFile.findUnique({
       where: { projectId_path: { projectId, path } },
@@ -289,8 +332,13 @@ export class ProjectsService {
     }
   }
 
-  static async updateFile(projectId: string, fileId: string, userId: string, input: UpdateFileInput) {
-    await this.assertAccess(projectId, userId)
+  static async updateFile(
+    projectId: string,
+    fileId: string,
+    userId: string,
+    input: UpdateFileInput,
+  ) {
+    await assertProjectAccess(projectId, userId, 'write')
     const file = await prisma.projectFile.findFirst({
       where: { id: fileId, projectId },
     })
@@ -300,6 +348,11 @@ export class ProjectsService {
       throw error
     }
 
+    if (file.yjsState) {
+      throw Object.assign(new Error('Arquivo colaborativo: envie alterações pelo Yjs'), {
+        status: 409,
+      })
+    }
     const sizeBytes = writeProjectFile(projectId, file.path, input.content, file.type)
     const updatedFile = await prisma.projectFile.update({
       where: { id: fileId, projectId },
@@ -316,7 +369,7 @@ export class ProjectsService {
   }
 
   static async deleteFile(projectId: string, fileId: string, userId: string) {
-    await this.assertAccess(projectId, userId)
+    await assertProjectAccess(projectId, userId, 'write')
     const file = await prisma.projectFile.findFirst({
       where: { id: fileId, projectId },
     })
@@ -326,6 +379,7 @@ export class ProjectsService {
       throw error
     }
 
+    await CollaborationService.closeFile(fileId)
     const deletedFile = await prisma.projectFile.delete({
       where: { id: fileId, projectId },
     })
