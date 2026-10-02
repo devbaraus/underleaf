@@ -5,21 +5,21 @@
 
 	# API routes and WebSockets (collab rooms)
 	handle /api* {
-		reverse_proxy backend:3333 {
+		reverse_proxy underleaf-backend:3333 {
 			flush_interval -1
 		}
 	}
 
 	# Health check and API documentation
 	handle /healthz {
-		reverse_proxy backend:3333
+		reverse_proxy underleaf-backend:3333
 	}
 	handle /openapi* {
-		reverse_proxy backend:3333
+		reverse_proxy underleaf-backend:3333
 	}
 
 	# Frontend (SSR and static assets)
 	handle {
-		reverse_proxy frontend:3000
+		reverse_proxy underleaf-frontend:3000
 	}
 }
