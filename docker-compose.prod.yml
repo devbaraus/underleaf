@@ -1,0 +1,86 @@
+name: underleaf-prod
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-underleaf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo de ambiente}
+      POSTGRES_DB: ${POSTGRES_DB:-underleaf}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      DATABASE_URL: postgresql://${POSTGRES_USER:-underleaf}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-underleaf}?schema=public
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Defina BETTER_AUTH_SECRET no arquivo de ambiente}
+      BETTER_AUTH_URL: ${APP_URL:-http://localhost:8080}
+      FRONTEND_URL: ${APP_URL:-http://localhost:8080}
+      CORS_ORIGIN: ${APP_URL:-http://localhost:8080}
+      TECTONIC_TIMEOUT_MS: ${TECTONIC_TIMEOUT_MS:-300000}
+      MENDELEY_CLIENT_ID: ${MENDELEY_CLIENT_ID:-}
+      MENDELEY_CLIENT_SECRET: ${MENDELEY_CLIENT_SECRET:-}
+      MENDELEY_REDIRECT_URI: ${MENDELEY_REDIRECT_URI:-}
+    volumes:
+      - project_storage:/app/apps/backend/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, bun, -e, "const r=await fetch('http://localhost:3333/healthz');process.exit(r.ok?0:1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      INTERNAL_API_URL: http://backend:3333
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, bun, -e, "const r=await fetch('http://localhost:3000/');process.exit(r.ok?0:1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  proxy:
+    image: nginx:1.28-alpine
+    restart: unless-stopped
+    ports:
+      - '${PUBLIC_PORT:-8080}:80'
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1/healthz]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  project_storage:

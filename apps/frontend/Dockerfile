@@ -1,31 +1,20 @@
-FROM oven/bun:1.4.2 AS base
-
+FROM oven/bun:1.4.2 AS builder
 WORKDIR /app
-
-FROM base AS builder
-
-COPY package.json bun.lock* ./
-COPY apps/frontend/package.json ./apps/frontend/
-
-RUN bun install --frozen-lockfile
-
+COPY package.json bun.lock ./
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY apps/frontend/package.json ./apps/frontend/package.json
+RUN bun install --frozen-lockfile --filter '@underleaf/frontend'
 COPY apps/frontend ./apps/frontend
-
 WORKDIR /app/apps/frontend
-
-RUN bun run generate-routes
+# Empty means same-origin API requests through the proxy.
+ARG VITE_API_URL=""
+ENV VITE_API_URL=$VITE_API_URL
 RUN bun run build
 
-FROM base AS runner
-
+FROM oven/bun:1.4.2 AS runner
 WORKDIR /app
-
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-
-COPY --from=builder /app/apps/frontend/.output ./
-
+ENV NODE_ENV=production NITRO_PORT=3000 NITRO_HOST=0.0.0.0
+COPY --from=builder --chown=bun:bun /app/apps/frontend/.output ./
+USER bun
 EXPOSE 3000
-
 CMD ["bun", "server/index.mjs"]
