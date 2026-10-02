@@ -28,15 +28,61 @@ function resolveTectonicBinary(): string {
   return candidates[0]
 }
 
+async function captureAndStreamOutput(
+  stream: ReadableStream<Uint8Array>,
+  prefix: string,
+  onLine?: (line: string) => void,
+): Promise<string> {
+  const reader = stream.getReader()
+  const decoder = new TextDecoder()
+  let fullOutput = ''
+  let buffer = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value, { stream: true })
+      fullOutput += chunk
+      buffer += chunk
+
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (trimmed) {
+          logging.info(`${prefix} ${trimmed}`)
+          onLine?.(trimmed)
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      logging.info(`${prefix} ${buffer.trim()}`)
+      onLine?.(buffer.trim())
+    }
+  } catch (err) {
+    logging.warn(`${prefix} Erro ao ler stream:`, err)
+  } finally {
+    reader.releaseLock()
+  }
+
+  return fullOutput
+}
+
 export async function runTectonic(
   buildDir: string,
   mainFile = 'main.tex',
   timeoutMs = env.TECTONIC_TIMEOUT_MS,
+  onLog?: (line: string) => void,
 ): Promise<TectonicRunResult> {
   const binary = resolveTectonicBinary()
   const mainFilePath = resolve(buildDir, mainFile)
 
   if (!existsSync(mainFilePath)) {
+    logging.error(`[tectonic] Arquivo principal não encontrado: ${mainFile} em ${buildDir}`)
     return {
       success: false,
       exitCode: -1,
@@ -45,7 +91,9 @@ export async function runTectonic(
   }
 
   const args = [binary, '--keep-logs', '--outdir', buildDir, mainFilePath]
+  logging.info(`[tectonic] Executando comando: ${binary} ${args.slice(1).join(' ')}`)
 
+  const startTime = Date.now()
   let timeout: ReturnType<typeof setTimeout> | undefined
   try {
     const proc = Bun.spawn(args, {
@@ -69,14 +117,19 @@ export async function runTectonic(
 
     const executionPromise = (async () => {
       const [stdoutText, stderrText] = await Promise.all([
-        new Response(proc.stdout).text(),
-        new Response(proc.stderr).text(),
+        captureAndStreamOutput(proc.stdout, '[tectonic]', onLog),
+        captureAndStreamOutput(proc.stderr, '[tectonic]', onLog),
       ])
 
       const exitCode = await proc.exited
       const output = `${stdoutText}\n${stderrText}`.trim()
       const expectedPdf = resolve(buildDir, mainFile.replace(/\.tex$/i, '.pdf'))
       const success = exitCode === 0 && existsSync(expectedPdf)
+      const durationMs = Date.now() - startTime
+
+      logging.info(
+        `[tectonic] Processo finalizado em ${durationMs}ms com exit code ${exitCode} (sucesso: ${success})`,
+      )
 
       return {
         success,

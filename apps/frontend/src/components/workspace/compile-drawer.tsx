@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { AlertCircle, Terminal, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { AlertCircle, Terminal, ChevronDown, ChevronUp, AlertTriangle, Loader2 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '#/components/ui/tabs'
 
 interface CompileError {
@@ -12,26 +12,51 @@ interface CompileError {
 interface CompileDrawerProps {
   errors: CompileError[]
   rawLogs: string
+  isCompiling?: boolean
   onJumpToLine?: (file: string, line: number) => void
 }
 
-export function CompileDrawer({ errors, rawLogs, onJumpToLine }: CompileDrawerProps) {
+export function CompileDrawer({ errors, rawLogs, isCompiling, onJumpToLine }: CompileDrawerProps) {
   const [isOpen, setIsOpen] = useState(true)
+  const [activeTab, setActiveTab] = useState<'errors' | 'raw'>('errors')
+  const logContainerRef = useRef<HTMLDivElement>(null)
 
-  if (!errors.length && !rawLogs) return null
+  // Quando inicia a compilação, muda automaticamente para a aba de logs em tempo real
+  useEffect(() => {
+    if (isCompiling) {
+      setActiveTab('raw')
+      setIsOpen(true)
+    } else if (errors.some((e) => e.severity === 'error')) {
+      setActiveTab('errors')
+    }
+  }, [isCompiling, errors])
+
+  // Rola automaticamente para o fim dos logs conforme as linhas chegam via SSE
+  useEffect(() => {
+    if (logContainerRef.current && (isCompiling || activeTab === 'raw')) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight
+    }
+  }, [rawLogs, isCompiling, activeTab])
+
+  if (!errors.length && !rawLogs && !isCompiling) return null
 
   return (
     <div className="border-t border-zinc-800 bg-zinc-950 text-xs">
       <div className="flex h-8 items-center justify-between bg-zinc-900/80 px-3 border-b border-zinc-800">
         <div className="flex items-center space-x-2">
-          {errors.some((e) => e.severity === 'error') ? (
+          {isCompiling ? (
+            <span className="flex items-center font-semibold text-sky-400">
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              Compilando com Tectonic (SSE)...
+            </span>
+          ) : errors.some((e) => e.severity === 'error') ? (
             <span className="flex items-center font-semibold text-red-400">
-              <AlertCircle className="mr-1 h-3.5 w-3.5" />
+              <AlertCircle className="mr-1.5 h-3.5 w-3.5" />
               Erros de Compilação ({errors.filter((e) => e.severity === 'error').length})
             </span>
           ) : (
             <span className="flex items-center font-semibold text-emerald-400">
-              <Terminal className="mr-1 h-3.5 w-3.5" />
+              <Terminal className="mr-1.5 h-3.5 w-3.5" />
               Logs de Compilação
             </span>
           )}
@@ -47,20 +72,23 @@ export function CompileDrawer({ errors, rawLogs, onJumpToLine }: CompileDrawerPr
       </div>
 
       {isOpen && (
-        <div className="h-40 overflow-y-auto p-2">
-          <Tabs defaultValue="errors">
+        <div className="h-44 overflow-y-auto p-2" ref={logContainerRef}>
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'errors' | 'raw')}>
             <TabsList className="h-7 bg-zinc-900 border border-zinc-800">
               <TabsTrigger value="errors" className="text-xs data-[state=active]:bg-zinc-800">
                 Erros Estruturados ({errors.length})
               </TabsTrigger>
               <TabsTrigger value="raw" className="text-xs data-[state=active]:bg-zinc-800">
-                Log Bruto TeX
+                Log TeX em Tempo Real
+                {isCompiling && <span className="ml-1.5 inline-block h-2 w-2 rounded-full bg-sky-400 animate-ping" />}
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value="errors" className="mt-2 space-y-1">
               {errors.length === 0 ? (
-                <div className="text-zinc-500 py-2">Nenhum erro de sintaxe detectado.</div>
+                <div className="text-zinc-500 py-2">
+                  {isCompiling ? 'Aguardando término da compilação...' : 'Nenhum erro de sintaxe detectado.'}
+                </div>
               ) : (
                 errors.map((err, i) => (
                   <div
@@ -85,8 +113,8 @@ export function CompileDrawer({ errors, rawLogs, onJumpToLine }: CompileDrawerPr
             </TabsContent>
 
             <TabsContent value="raw">
-              <pre className="rounded bg-zinc-900/80 p-2 font-mono text-[11px] text-zinc-400 overflow-x-auto whitespace-pre-wrap">
-                {rawLogs || 'Nenhum log disponível.'}
+              <pre className="rounded bg-zinc-900/80 p-2 font-mono text-[11px] text-zinc-300 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                {rawLogs || (isCompiling ? 'Iniciando compilador Tectonic...' : 'Nenhum log disponível.')}
               </pre>
             </TabsContent>
           </Tabs>

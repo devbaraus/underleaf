@@ -160,17 +160,69 @@ function WorkspacePage() {
 		},
 	})
 
-	// 6. Compilação LaTeX com Tectonic
+	// 6. Compilação LaTeX com Tectonic (via Server-Sent Events)
 	const compileMutation = useMutation({
 		mutationFn: async () => {
 			if (!flushRef.current) throw new Error('Aguarde a sincronização do editor')
 			await flushRef.current()
+
+			setRawLogs('')
+			setCompileErrors([])
+
 			const res = await fetch(`${appConfig.apiUrl}/api/projects/${projectId}/compile`, {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'text/event-stream',
+				},
 				credentials: 'include',
 				body: JSON.stringify({}),
 			})
+
+			const isSSE = res.headers.get('content-type')?.includes('text/event-stream')
+
+			if (isSSE && res.body) {
+				const reader = res.body.getReader()
+				const decoder = new TextDecoder()
+				let buffer = ''
+				let finalResult: any = null
+
+				while (true) {
+					const { done, value } = await reader.read()
+					if (done) break
+
+					buffer += decoder.decode(value, { stream: true })
+					const chunks = buffer.split('\n\n')
+					buffer = chunks.pop() ?? ''
+
+					for (const chunk of chunks) {
+						for (const line of chunk.split('\n')) {
+							if (line.startsWith('data: ')) {
+								try {
+									const parsed = JSON.parse(line.slice(6))
+									if (parsed.type === 'log') {
+										setRawLogs((prev) => (prev ? `${prev}\n${parsed.data}` : parsed.data))
+									} else if (parsed.type === 'result') {
+										finalResult = parsed.data
+									} else if (parsed.type === 'error') {
+										throw new Error(parsed.data)
+									}
+								} catch (e: any) {
+									if (e.message && !e.message.includes('JSON')) {
+										throw e
+									}
+								}
+							}
+						}
+					}
+				}
+
+				if (!finalResult) {
+					throw new Error('Compilação finalizada sem retorno de resultado')
+				}
+
+				return { status: finalResult.success ? 200 : 422, data: finalResult }
+			}
 
 			const data = await res.json()
 			return { status: res.status, data }
@@ -358,7 +410,11 @@ function WorkspacePage() {
 							</div>
 
 							{/* Drawer de Compilação */}
-							<CompileDrawer errors={compileErrors} rawLogs={rawLogs} />
+							<CompileDrawer
+								errors={compileErrors}
+								rawLogs={rawLogs}
+								isCompiling={compileMutation.isPending}
+							/>
 						</div>
 					</Panel>
 

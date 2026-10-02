@@ -47,9 +47,9 @@ function ProjectsDashboardPage() {
 	const [newDescription, setNewDescription] = useState('')
 	const [newTemplate, setNewTemplate] = useState('academic-paper')
 
-	const { data: projects = [], isLoading } = useQuery({
+	const { data: projects = [], isLoading } = useQuery<any[]>({
 		queryKey: ['projects'],
-		queryFn: async () => await $fetch('@get/projects', {}),
+		queryFn: async () => (await $fetch('@get/projects', {})) as any[],
 	})
 
 	const createMutation = useMutation({
@@ -62,7 +62,7 @@ function ProjectsDashboardPage() {
 					template: newTemplate,
 				}),
 			}),
-		onSuccess: (newProj) => {
+		onSuccess: (newProj: any) => {
 			queryClient.invalidateQueries({ queryKey: ['projects'] })
 			setIsCreateOpen(false)
 			setNewTitle('')

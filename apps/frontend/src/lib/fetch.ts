@@ -1,9 +1,10 @@
 import { createFetch } from '@better-fetch/fetch'
 
 import { betterFetchSchema } from '#/generated/kubb/betterFetchSchema'
+import { appConfig } from '#/config'
 
 export const $fetch = createFetch({
-	baseURL: `http://localhost:3333/api/`,
+	baseURL: `${appConfig.apiUrl}/api/`,
 	credentials: 'include',
 	throw: true,
 	retry: 0,

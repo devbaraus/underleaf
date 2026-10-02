@@ -10,9 +10,17 @@ import { runTectonic } from './tectonic-runner'
 import type { CompileBody } from './compiler-schema'
 
 export class CompilerService {
-  static async compile(projectId: string, userId: string, payload?: CompileBody) {
+  static async compile(
+    projectId: string,
+    userId: string,
+    payload?: CompileBody,
+    onLog?: (line: string) => void,
+  ) {
     await assertProjectAccess(projectId, userId, 'write')
     const startTime = Date.now()
+
+    logging.info(`[compiler] Iniciando fluxo de compilação: projeto ${projectId} (usuário: ${userId})`)
+    onLog?.('[compiler] Iniciando fluxo de compilação...')
 
     const project = await ProjectsService.getById(projectId, userId)
 
@@ -31,7 +39,8 @@ export class CompilerService {
 
     try {
       // 1. Persiste alterações pendentes diretamente na árvore física do projeto.
-      if (payload?.unsavedFiles) {
+      if (payload?.unsavedFiles && payload.unsavedFiles.length > 0) {
+        onLog?.(`[compiler] Salvando ${payload.unsavedFiles.length} arquivo(s) modificado(s)...`)
         for (const unsaved of payload.unsavedFiles) {
           const file = project.files.find((item) => item.path === unsaved.path)
           if (!file || file.type === 'image') continue
@@ -41,10 +50,13 @@ export class CompilerService {
       }
 
       // 2. Copia a árvore física para um workspace efêmero de compilação.
+      onLog?.('[compiler] Preparando workspace efêmero...')
       copyProjectDirectory(projectId, buildDir)
 
       // 4. Executa compilação Tectonic
-      const runResult = await runTectonic(buildDir, mainFileName)
+      logging.info(`[compiler] Executando Tectonic no diretório: ${buildDir} (arquivo principal: ${mainFileName})`)
+      onLog?.(`[compiler] Executando Tectonic (${mainFileName})...`)
+      const runResult = await runTectonic(buildDir, mainFileName, undefined, onLog)
       const durationMs = Date.now() - startTime
 
       let parsedErrors: any[] = []
@@ -53,6 +65,7 @@ export class CompilerService {
       if (runResult.success && runResult.pdfPath) {
         finalPdfPath = resolve(pdfCacheDir, `${projectId}.pdf`)
         copyFileSync(runResult.pdfPath, finalPdfPath)
+        logging.info(`[compiler] Compilação do projeto ${projectId} concluída com SUCESSO em ${durationMs}ms -> ${finalPdfPath}`)
 
         await prisma.project.update({
           where: { id: projectId },
@@ -65,6 +78,7 @@ export class CompilerService {
         })
       } else {
         parsedErrors = parseLatexErrors(runResult.output, mainFileName)
+        logging.warn(`[compiler] Compilação do projeto ${projectId} FALHOU em ${durationMs}ms com ${parsedErrors.length} erro(s) identificado(s)`)
         await prisma.project.update({
           where: { id: projectId },
           data: {
