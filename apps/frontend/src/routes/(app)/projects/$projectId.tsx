@@ -9,11 +9,11 @@ import { Button } from '#/components/ui/button'
 import { CompileDrawer } from '#/components/workspace/compile-drawer'
 import { FileTree } from '#/components/workspace/file-tree'
 import { MonacoLatexEditor } from '#/components/workspace/monaco-editor'
-import { useBibliography } from '#/hooks/use-bibliography'
 import { PdfPreviewer } from '#/components/workspace/pdf-previewer'
-import { ReferenceImport } from '#/components/workspace/reference-import'
 import { ProjectSharing } from '#/components/workspace/project-sharing'
 import { appConfig } from '#/config'
+import { useBibliography } from '#/hooks/use-bibliography'
+import { ReferenceImport } from '#/components/workspace/reference-import'
 
 const UPLOAD_ACCEPT = '.tex,.bib,image/*'
 const TEXT_FILE_EXTENSIONS = new Set(['tex', 'bib'])
@@ -41,6 +41,7 @@ export const Route = createFileRoute('/(app)/projects/$projectId')({
 
 function WorkspacePage() {
 	const { projectId } = Route.useParams()
+	const { user } = Route.useRouteContext()
 	const queryClient = useQueryClient()
 	const uploadInputRef = useRef<HTMLInputElement>(null)
 	const folderUploadInputRef = useRef<HTMLInputElement>(null)
@@ -52,6 +53,25 @@ function WorkspacePage() {
 	>('connecting')
 	const [compileErrors, setCompileErrors] = useState<any[]>([])
 	const [rawLogs, setRawLogs] = useState<string>('')
+	const [peerIsCompiling, setPeerIsCompiling] = useState(false)
+	const [pdfRefreshTrigger, setPdfRefreshTrigger] = useState(0)
+
+	const handlePdfStatus = (status: 'compiling' | 'compiled' | 'error', compilerUserId?: string) => {
+		if (status === 'compiling') {
+			if (compilerUserId !== user?.id) {
+				setPeerIsCompiling(true)
+			}
+		} else if (status === 'compiled') {
+			setPeerIsCompiling(false)
+			setPdfRefreshTrigger(Date.now())
+			queryClient.invalidateQueries({ queryKey: ['project', projectId] })
+			if (compilerUserId && compilerUserId !== user?.id) {
+				toast.info('PDF recompilado por um colaborador!')
+			}
+		} else if (status === 'error') {
+			setPeerIsCompiling(false)
+		}
+	}
 
 	// 1. Busca dados do projeto e arquivos
 	const {
@@ -404,6 +424,7 @@ function WorkspacePage() {
 									}}
 									fileName={activeFile}
 									onCompile={handleCompile}
+									onPdfStatus={handlePdfStatus}
 									errors={compileErrors}
 									citations={citations}
 								/>
@@ -426,7 +447,8 @@ function WorkspacePage() {
 							projectId={projectId}
 							hasPdf={project?.hasPdf || false}
 							lastCompiledAt={project?.lastCompiledAt}
-							isCompiling={compileMutation.isPending}
+							isCompiling={compileMutation.isPending || peerIsCompiling}
+							refreshTrigger={pdfRefreshTrigger}
 						/>
 					</Panel>
 				</PanelGroup>

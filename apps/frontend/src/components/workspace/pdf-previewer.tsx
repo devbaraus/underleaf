@@ -34,6 +34,7 @@ interface PdfPreviewerProps {
 	hasPdf: boolean
 	lastCompiledAt?: string | null
 	isCompiling: boolean
+	refreshTrigger?: number
 }
 
 export function PdfPreviewer({
@@ -41,6 +42,7 @@ export function PdfPreviewer({
 	hasPdf,
 	lastCompiledAt,
 	isCompiling,
+	refreshTrigger,
 }: PdfPreviewerProps) {
 	const [refreshKey, setRefreshKey] = useState(Date.now())
 	const [ViewerComponent, setViewerComponent] =
@@ -59,12 +61,12 @@ export function PdfPreviewer({
 		}
 	}, [])
 
-	// Atualiza automaticamente o visualizador quando uma nova compilação for concluída
+	// Atualiza automaticamente o visualizador quando uma nova compilação for concluída ou sinalizada por peer
 	useEffect(() => {
-		if (lastCompiledAt) {
+		if (lastCompiledAt || refreshTrigger) {
 			setRefreshKey(Date.now())
 		}
-	}, [lastCompiledAt])
+	}, [lastCompiledAt, refreshTrigger])
 
 	const pdfUrl = `${appConfig.apiUrl}/api/projects/${projectId}/pdf?t=${refreshKey}`
 

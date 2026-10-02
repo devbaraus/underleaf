@@ -49,6 +49,14 @@ export class CollaborationRoom {
     for (const peer of this.peers.keys()) peer.send(message)
   }
 
+  broadcastPdfStatus(status: 'compiling' | 'compiled' | 'error', compilerUserId?: string) {
+    const encoder = encoding.createEncoder()
+    encoding.writeVarUint(encoder, 5) // messageType 5 = PDF_STATUS
+    encoding.writeVarString(encoder, status)
+    encoding.writeVarString(encoder, compilerUserId || '')
+    this.broadcast(encoding.toUint8Array(encoder))
+  }
+
   join(peer: Peer) {
     this.peers.set(peer, new Set())
     const encoder = encoding.createEncoder()

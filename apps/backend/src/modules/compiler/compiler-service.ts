@@ -5,6 +5,7 @@ import { logging } from '@/shared/logger'
 import { copyProjectDirectory } from '@/modules/projects/project-storage'
 import { assertProjectAccess } from '../projects/project-access'
 import { ProjectsService } from '@/modules/projects/projects-service'
+import { CollaborationService } from '../collaboration/collaboration-service'
 import { parseLatexErrors } from './error-parser'
 import { runTectonic } from './tectonic-runner'
 import type { CompileBody } from './compiler-schema'
@@ -21,6 +22,7 @@ export class CompilerService {
 
     logging.info(`[compiler] Iniciando fluxo de compilação: projeto ${projectId} (usuário: ${userId})`)
     onLog?.('[compiler] Iniciando fluxo de compilação...')
+    CollaborationService.broadcastProjectPdfStatus(projectId, 'compiling', userId).catch(() => {})
 
     const project = await ProjectsService.getById(projectId, userId)
 
@@ -76,6 +78,9 @@ export class CompilerService {
             compilationCount: { increment: 1 },
           },
         })
+
+        // Emite sinal a todos os peers conectados no projeto para recarregar o PDF
+        await CollaborationService.broadcastProjectPdfStatus(projectId, 'compiled', userId)
       } else {
         parsedErrors = parseLatexErrors(runResult.output, mainFileName)
         logging.warn(`[compiler] Compilação do projeto ${projectId} FALHOU em ${durationMs}ms com ${parsedErrors.length} erro(s) identificado(s)`)
@@ -86,6 +91,9 @@ export class CompilerService {
             compilationCount: { increment: 1 },
           },
         })
+
+        // Notifica que a compilação finalizou com erro
+        await CollaborationService.broadcastProjectPdfStatus(projectId, 'error', userId)
       }
 
       // 5. Registra log na tabela compile_log
@@ -108,6 +116,9 @@ export class CompilerService {
         errors: parsedErrors,
         rawOutput: runResult.output,
       }
+    } catch (compileError) {
+      CollaborationService.broadcastProjectPdfStatus(projectId, 'error', userId).catch(() => {})
+      throw compileError
     } finally {
       // Limpeza do workspace efêmero
       try {

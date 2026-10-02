@@ -26,6 +26,7 @@ interface MonacoLatexEditorProps {
 	fileName: string
 	onCompile: () => void
 	onFlushReady: (flush: (() => Promise<void>) | null) => void
+	onPdfStatus?: (status: 'compiling' | 'compiled' | 'error', compilerUserId?: string) => void
 	errors?: CompileError[]
 	citations?: CitationEntry[]
 }
@@ -90,6 +91,7 @@ export function MonacoLatexEditor({
 	fileName,
 	onCompile,
 	onFlushReady,
+	onPdfStatus,
 	errors = [],
 	citations = [],
 }: MonacoLatexEditorProps) {
@@ -101,8 +103,8 @@ export function MonacoLatexEditor({
 	const [canEdit, setCanEdit] = useState(false)
 	const [history, setHistory] = useState({ undo: false, redo: false })
 	const [mounted, setMounted] = useState(false)
-	const callbacks = useRef({ onStatus, onCompile, onFlushReady })
-	callbacks.current = { onStatus, onCompile, onFlushReady }
+	const callbacks = useRef({ onStatus, onCompile, onFlushReady, onPdfStatus })
+	callbacks.current = { onStatus, onCompile, onFlushReady, onPdfStatus }
 	const [ready, setReady] = useState(false)
 
 	useEffect(() => {
@@ -171,6 +173,11 @@ export function MonacoLatexEditor({
 				clearTimeout(pending.timer)
 				barriers.delete(id)
 				pending.resolve()
+			}
+			provider.messageHandlers[5] = (_encoder, decoder) => {
+				const status = decoding.readVarString(decoder) as 'compiling' | 'compiled' | 'error'
+				const compilerUserId = decoding.readVarString(decoder)
+				callbacks.current.onPdfStatus?.(status, compilerUserId)
 			}
 			callbacks.current.onFlushReady(
 				() =>

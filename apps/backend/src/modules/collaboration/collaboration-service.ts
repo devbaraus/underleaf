@@ -107,4 +107,20 @@ export const CollaborationService = {
     rooms.delete(fileId)
     room.destroy()
   },
+
+  async broadcastProjectPdfStatus(
+    projectId: string,
+    status: 'compiling' | 'compiled' | 'error',
+    compilerUserId?: string,
+  ) {
+    const files = await prisma.projectFile.findMany({ where: { projectId }, select: { id: true } })
+    for (const file of files) {
+      const roomPromise = rooms.get(file.id)
+      if (!roomPromise) continue
+      try {
+        const room = await roomPromise
+        room.broadcastPdfStatus(status, compilerUserId)
+      } catch {}
+    }
+  },
 }
