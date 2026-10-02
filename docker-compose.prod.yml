@@ -14,6 +14,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - underleaf_network
 
   backend:
     build:
@@ -44,6 +46,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    networks:
+      - underleaf_network
 
   frontend:
     build:
@@ -64,7 +68,9 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
+    networks:
+      - underleaf_network
+      
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -84,9 +90,15 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
+    networks:
+      - underleaf_network
 
 volumes:
   postgres_data:
   project_storage:
   caddy_data:
   caddy_config:
+
+networks:
+  underleaf_network:
+    driver: bridge
